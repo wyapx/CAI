@@ -184,9 +184,9 @@ class Client:
         self._msg_cache: TTLCache = TTLCache(maxsize=1024, ttl=3600)
         self._receive_store: FutureStore[int, Command] = FutureStore()
 
+        self._reconnect: bool = True
         self.device_info: DeviceInfo = device
         self.apk_info: ApkInfo = apk_info
-        self._reconnect: bool = True
         self.closed: asyncio.Event = asyncio.Event()
 
         if not loop:
@@ -508,7 +508,7 @@ class Client:
                     "Cannot get verify_url or captcha_image from the response!",
                 )
         elif isinstance(response, AccountFrozen):
-            log.logger.info("账号已被冻结！")
+            log.logger.error("账号已被冻结！")
             raise LoginAccountFrozen(response.uin)
         elif isinstance(response, DeviceLocked):
             msg = "账号已开启设备锁！"
@@ -525,7 +525,7 @@ class Client:
                 response.message,
             )
         elif isinstance(response, TooManySMSRequest):
-            log.logger.info("验证码发送过于频繁！")
+            log.logger.warning("验证码发送过于频繁！")
             raise LoginSMSRequestError(response.uin)
         elif isinstance(response, DeviceLockLogin):
             if try_times:
@@ -564,7 +564,7 @@ class Client:
                 msg = packet_.start(2).string(2).execute()[0]
             else:
                 msg = ""
-            log.logger.info(f"未知的登录返回码 {response.status}! {msg}")
+            log.logger.error(f"未知的登录返回码 {response.status}! {msg}")
             raise LoginException(
                 response.uin, response.status, "Unknown login status."
             )
