@@ -150,16 +150,13 @@ class TlvEncoder:
         # DeviceInfo
         return cls._pack_tlv(
             0x1f,
-            struct.pack(
-                "!bssHsss",
-                0,
-                cls._pack_lv(b"android"),
-                cls._pack_lv(b"10.0.0"),
-                2,
-                cls._pack_lv(b"China Telecom CDMA"),
-                cls._pack_lv(b"\x00"),
-                cls._pack_lv(b"wifi")
-            )
+            b"\x00",
+            cls._pack_lv(b"android"),
+            cls._pack_lv(b"10.0.0"),
+            b"\x02",
+            cls._pack_lv(b"China Telecom CDMA"),
+            cls._pack_lv(b"\x00"),
+            cls._pack_lv(b"wifi")
         )
 
     @classmethod

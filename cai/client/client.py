@@ -1396,12 +1396,12 @@ class Client:
         ret = await self.send_and_wait(
             seq,
             "wtlogin.trans_emp",
-            rtea.qqtea_encrypt(bytes(encode_qrcode_fetch(
+            encode_qrcode_fetch(
                 seq,
                 self.apk_info,
                 self.device_info,
                 self
-            )), b"\x00" * 16)
+            )
         )
         payload = rtea.qqtea_decrypt(ret.data[16:-1], ECDH.share_key)[54:]
         print(payload[0], len(payload[1:]))
