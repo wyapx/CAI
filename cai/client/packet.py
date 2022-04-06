@@ -65,7 +65,7 @@ class CSsoBodyPacket(Packet):
             Source: `CSSOReqHead::serialize_verFull`
         """
         packet = cls().write_with_length(
-            struct.pack(">III", seq, sub_app_id, sub_app_id),
+            struct.pack(">III", seq, 16, sub_app_id),
             unknown_bytes,
             struct.pack(">I", len(extra_data) + 4),
             extra_data,
