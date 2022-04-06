@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from cai.client.client import Client
 
 
-def _encode_multi_req_body(group_id: int, data_len: int, data_md5: bytes, bu_type: int) -> MultiReqBody:
+def encode_multi_req_body(group_id: int, data_len: int, data_md5: bytes, bu_type: int) -> MultiReqBody:
     return MultiReqBody(
         subcmd=1,
         termType=5,
@@ -35,9 +35,7 @@ class MultiApplyResp(Command):
 async def build_multi_apply_up_pkg(client: "Client", group_id: int, data_len: int, data_md5: bytes, bu_type: int) -> Tuple[LongReqBody, MultiMsgApplyUpRsp]:
     body: MultiApplyResp = await client.send_unipkg_and_wait(
         "MultiMsg.ApplyUp",
-        _encode_multi_req_body(
-            group_id, data_len, data_md5, bu_type
-        ).SerializeToString()
+        encode_multi_req_body(group_id, data_len, data_md5, bu_type).SerializeToString()
     )
     LongReqBody(
         subcmd=1,
@@ -53,10 +51,7 @@ async def build_multi_apply_up_pkg(client: "Client", group_id: int, data_len: in
     )
 
 
-
-
-
-async def _handle_multi_resp_body(client: "Client", pkg: "IncomingPacket", _device) -> MultiApplyResp:
+async def handle_multi_resp_body(client: "Client", pkg: "IncomingPacket", _device) -> MultiApplyResp:
     mrb = MultiRspBody.FromString(pkg.data).multimsgApplyupRsp
     if not mrb:
         raise ConnectionError("no MultiMsgApplyUpRsp Found")

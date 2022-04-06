@@ -766,6 +766,79 @@ def encode_exchange_emp_15(
     return packet
 
 
+"""def c2d_req(seq: int, j: int, cmd: int, body: bytes) -> Packet:
+    return Packet.build(
+        # c2d req
+        b"\x02",
+        (len(body) + 44).to_bytes(2, "big"),
+        cmd.to_bytes(2, "big"),
+        b"\x00" * 21,
+        struct.pack("!cHHLQ", 3, 0, 50, seq, j),
+        body,
+        b"\x03"
+    )"""
+
+
+def build_c2d_pkg(cmd_id: int, head: int, seq: int, body: Packet) -> Packet:
+    return Packet.build(
+        struct.pack(
+            "!IIHIIbHHsbHHIQsb",
+            head,
+            0x1000,
+            0,
+            0x72000000,
+            int(time.time()),
+            2,
+            44 + len(body),
+            cmd_id,
+            b"\x00" * 21,
+            3,
+            0,
+            50,
+            seq,
+            0,
+            body,
+            3
+        )
+    )
+
+
+def encode_qrcode_fetch(
+    seq: int,
+    apk_info: ApkInfo,
+    device: DeviceInfo,
+    client: "Client"
+) -> Packet:
+    COMMAND_ID = 0x0812
+
+    data = build_c2d_pkg(
+        0x31,
+        0x11100,
+        seq,
+        Packet.build(
+            struct.pack("!HIQbHbH", 0, 16, 0, 8, 1, 0, 6),
+            TlvEncoder.t16(apk_info, device.guid),
+            TlvEncoder.t1b(),
+            TlvEncoder.t1d(),
+            TlvEncoder.t1f(),
+            TlvEncoder.t33(device.guid),
+            TlvEncoder.t35()
+        )
+    )
+    return CSsoBodyPacket.build(
+        seq,
+        apk_info.sub_app_id,
+        "wtlogin.trans_emp",
+        device.imei,
+        client._session_id,
+        b"",
+        extra_data=client._siginfo.tgt,
+        body=OICQRequest.build_encoded(
+            0, COMMAND_ID, ECDH.encrypt(data, b"\x00" * 16), ECDH.id
+        )
+    )
+
+
 async def handle_oicq_response(
     client: "Client", packet: IncomingPacket, dev: Tuple[DeviceInfo, ApkInfo]
 ) -> OICQResponse:

@@ -55,7 +55,7 @@ def parse_elements(elems: Sequence[Elem], ptt: Optional[Ptt]) -> List[Element]:
     Returns:
         List[Element]: List of decoded message elements.
     """
-    if ptt:
+    if ptt and ptt.HasField("file_name"):
         if ptt.file_name.endswith(b".amr"):
             info = {}
             for bl in ptt.down_para.decode().split("&")[1:]:

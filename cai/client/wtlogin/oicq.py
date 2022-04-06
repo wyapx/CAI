@@ -37,7 +37,7 @@ class OICQRequest(Packet):
             struct.pack(
                 ">BHHHHIBBBIII",
                 2,
-                27 + 2 + len(encoded),
+                29 + len(encoded),
                 8001,  # oicq.wlogin_sdk.request.oicq_request.i
                 command_id,
                 1,

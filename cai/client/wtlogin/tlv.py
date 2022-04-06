@@ -12,12 +12,16 @@ import time
 import random
 import struct
 from hashlib import md5
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Union, TYPE_CHECKING
 
 from rtea import qqtea_decrypt, qqtea_encrypt
 
 from cai.utils.binary import Packet
 from cai.pb.wtlogin import DeviceReport
+
+if TYPE_CHECKING:
+    from cai.settings.protocol import ApkInfo
+    from cai.settings.device import DeviceInfo
 
 
 class TlvEncoder:
@@ -77,6 +81,16 @@ class TlvEncoder:
         return cls._pack_tlv(0x8, struct.pack(">HIH", i, local_id, i2))
 
     @classmethod
+    def t16(cls, apk_info: "ApkInfo", guid: bytes) -> "Packet[()]":
+        return cls._pack_tlv(
+            0x16,
+            struct.pack("!IIIs", 7, apk_info.app_id, apk_info.sub_app_id, guid),
+            cls._pack_lv(apk_info.apk_id.encode()),
+            cls._pack_lv(apk_info.version.encode()),
+            cls._pack_lv(apk_info.apk_sign)
+        )
+
+    @classmethod
     def t18(
         cls,
         app_id: int,
@@ -99,6 +113,62 @@ class TlvEncoder:
                 0,
             ),
         )
+
+    @classmethod
+    def t1b(cls) -> "Packet[()]":
+        return cls._pack_tlv(
+            0x1b,
+            struct.pack(
+                "!IIIIIIIH",
+                0,
+                0,
+                3,
+                4,
+                72,
+                2,
+                2,
+                0
+            )
+        )
+
+    @classmethod
+    def t1d(cls) -> "Packet[()]":
+        return cls._pack_tlv(
+            0x1d,
+            struct.pack(
+                "!bIIbI",
+                1,
+                0xaf7ff7c,
+                0,
+                0,
+                0
+            )
+        )
+
+    @classmethod
+    def t1f(cls) -> "Packet[()]":
+        # DeviceInfo
+        return cls._pack_tlv(
+            0x1f,
+            struct.pack(
+                "!bssHsss",
+                0,
+                cls._pack_lv(b"android"),
+                cls._pack_lv(b"10.0.0"),
+                2,
+                cls._pack_lv(b"China Telecom CDMA"),
+                cls._pack_lv(b"\x00"),
+                cls._pack_lv(b"wifi")
+            )
+        )
+
+    @classmethod
+    def t33(cls, guid: bytes) -> "Packet[()]":
+        return cls._pack_tlv(0x33, guid)
+
+    @classmethod
+    def t35(cls) -> "Packet[()]":
+        return cls._pack_tlv(0x35, int(8).to_bytes(2, "big"))
 
     @classmethod
     def t100(

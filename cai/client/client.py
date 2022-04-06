@@ -23,6 +23,7 @@ from typing import (
     overload, Tuple,
 )
 
+import rtea
 from cachetools import TTLCache
 
 from cai import log
@@ -46,9 +47,9 @@ from cai.exceptions import (
 )
 
 from .event import Event
-from .multi_msg.long_msg import _handle_multi_resp_body
+from .multi_msg.long_msg import handle_multi_resp_body
 from .packet import IncomingPacket, UniPacket
-from .command import Command, _packet_to_command
+from .command import Command, UnhandledCommand, _packet_to_command
 from .sso_server import SsoServer, get_sso_server
 from .online_push import handle_c2c_sync, handle_push_msg
 from .heartbeat import Heartbeat, encode_heartbeat, handle_heartbeat
@@ -107,7 +108,9 @@ from .wtlogin import (
     encode_login_request20,
     encode_login_request2_slider,
     encode_login_request2_captcha,
+    encode_qrcode_fetch
 )
+from ..utils.crypto import ECDH
 
 HT = Callable[["Client", IncomingPacket, Tuple[DeviceInfo, ApkInfo]], Awaitable[Command]]
 LT = Callable[["Client", Event], Awaitable[None]]
@@ -133,7 +136,7 @@ HANDLERS: Dict[str, HT] = {
     # "OnlinePush.PbPushBindUinGroupMsg": handle_push_msg,  # sub account
 
     # new
-    "MultiMsg.ApplyUp": _handle_multi_resp_body
+    "MultiMsg.ApplyUp": handle_multi_resp_body
 }
 
 
@@ -184,7 +187,7 @@ class Client:
         self._msg_cache: TTLCache = TTLCache(maxsize=1024, ttl=3600)
         self._receive_store: FutureStore[int, Command] = FutureStore()
 
-        self._reconnect: bool = True
+        self._reconnect: bool = False
         self.device_info: DeviceInfo = device
         self.apk_info: ApkInfo = apk_info
         self.closed: asyncio.Event = asyncio.Event()
@@ -286,7 +289,7 @@ class Client:
                 _server.host, _server.port, ssl=False, timeout=3.0
             )
             self._loop.create_task(self.receive()).add_done_callback(self._recv_done_cb)
-        except ConnectionError as e:
+        except ConnectionError:
             raise
         except Exception as e:
             raise ConnectionError(
@@ -390,7 +393,7 @@ class Client:
         command_name: str,
         packet: Union[bytes, Packet],
         timeout: Optional[float] = 10.0,
-    ) -> Command:
+    ) -> UnhandledCommand:
         """Send a packet with the given sequence and wait for the response.
 
         Args:
@@ -568,6 +571,8 @@ class Client:
             raise LoginException(
                 response.uin, response.status, "Unknown login status."
             )
+        else:
+            self._reconnect = True
 
     async def _init(self) -> None:
         if not self.connected or self.status == OnlineStatus.Offline:
@@ -1385,3 +1390,18 @@ class Client:
 
         if not isinstance(response, GetMessageCommand):
             raise RuntimeError("Invalid get message response type!")
+
+    async def qrcode_login(self):
+        seq = self.next_seq()
+        ret = await self.send_and_wait(
+            seq,
+            "wtlogin.trans_emp",
+            rtea.qqtea_encrypt(bytes(encode_qrcode_fetch(
+                seq,
+                self.apk_info,
+                self.device_info,
+                self
+            )), b"\x00" * 16)
+        )
+        payload = rtea.qqtea_decrypt(ret.data[16:-1], ECDH.share_key)[54:]
+        print(payload[0], len(payload[1:]))
