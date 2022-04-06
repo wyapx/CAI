@@ -9,6 +9,7 @@ This module is used to build and handle login related packet.
     https://github.com/cscs181/CAI/blob/master/LICENSE
 """
 import ipaddress
+import os
 import secrets
 import string
 import struct
@@ -16,6 +17,7 @@ import time
 from hashlib import md5
 from typing import TYPE_CHECKING, Tuple
 
+import rtea
 from rtea import qqtea_decrypt
 
 from cai.client.packet import (
@@ -814,7 +816,7 @@ def encode_qrcode_fetch(
     data = build_c2d_pkg(
         0x31,
         0x11100,
-        seq,
+        seq + 1,
         Packet.build(
             struct.pack("!HIQbHbH", 0, 16, 0, 8, 1, 0, 6),
             TlvEncoder.t16(apk_info, device.guid),
@@ -825,17 +827,34 @@ def encode_qrcode_fetch(
             TlvEncoder.t35()
         )
     )
-    return CSsoBodyPacket.build(
-        seq,
-        apk_info.sub_app_id,
-        "wtlogin.trans_emp",
-        device.imei,
-        client._session_id,
-        b"",
-        extra_data=client._siginfo.tgt,
-        body=OICQRequest.build_encoded(
-            0, COMMAND_ID, ECDH.encrypt(data, b"\x00" * 16), ECDH.id
+    data = Packet.build(
+        struct.pack(
+            "!BBsHHss",
+            2,
+            1,
+            os.urandom(16),
+            0x131,
+            1,
+            ECDH.client_public_key,
+            rtea.qqtea_encrypt(bytes(data), ECDH.share_key)
         )
+    )
+    return CSsoDataPacket.build(
+        0,
+        body_type=2,
+        extra_data=client._siginfo.d2,
+        body=rtea.qqtea_encrypt(bytes(CSsoBodyPacket.build(
+            seq,
+            apk_info.sub_app_id,
+            "wtlogin.trans_emp",
+            device.imei,
+            client._session_id,
+            b"",
+            extra_data=client._siginfo.tgt,
+            body=OICQRequest.build_encoded(
+                0, COMMAND_ID, data, ECDH.id
+            )
+        )), b"\x00" * 16)
     )
 
 
