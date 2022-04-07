@@ -195,8 +195,8 @@ class IncomingPacket:
             raise ValueError(
                 f"Invalid packet type. Expected 0xA / 0xB, got {packet_type}."
             )
-        if flag3 != 0:
-            raise ValueError(f"Invalid flag3. Expected 0, got {flag3}.")
+        #if flag3 != 0:
+        #    raise ValueError(f"Invalid flag3. Expected 0, got {flag3}.")
 
         try:
             uin = int(uin)

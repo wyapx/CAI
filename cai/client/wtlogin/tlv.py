@@ -84,7 +84,8 @@ class TlvEncoder:
     def t16(cls, apk_info: "ApkInfo", guid: bytes) -> "Packet[()]":
         return cls._pack_tlv(
             0x16,
-            struct.pack("!IIIs", 7, apk_info.app_id, apk_info.sub_app_id, guid),
+            struct.pack("!III", 7, apk_info.app_id, apk_info.sub_app_id),
+            guid,
             cls._pack_lv(apk_info.apk_id.encode()),
             cls._pack_lv(apk_info.version.encode()),
             cls._pack_lv(apk_info.apk_sign)
@@ -136,7 +137,7 @@ class TlvEncoder:
         return cls._pack_tlv(
             0x1d,
             struct.pack(
-                "!bIIbI",
+                "!BIIBI",
                 1,
                 0xaf7ff7c,
                 0,
@@ -153,7 +154,7 @@ class TlvEncoder:
             b"\x00",
             cls._pack_lv(b"android"),
             cls._pack_lv(b"10.0.0"),
-            b"\x02",
+            b"\x00\x02",
             cls._pack_lv(b"China Telecom CDMA"),
             cls._pack_lv(b"\x00"),
             cls._pack_lv(b"wifi")
@@ -165,7 +166,7 @@ class TlvEncoder:
 
     @classmethod
     def t35(cls) -> "Packet[()]":
-        return cls._pack_tlv(0x35, int(8).to_bytes(2, "big"))
+        return cls._pack_tlv(0x35, int(8).to_bytes(4, "big"))
 
     @classmethod
     def t100(

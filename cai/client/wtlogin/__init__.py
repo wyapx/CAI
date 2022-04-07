@@ -782,9 +782,10 @@ def encode_exchange_emp_15(
 
 
 def build_c2d_pkg(cmd_id: int, head: int, seq: int, body: Packet) -> Packet:
+    print(body.hex())
     return Packet.build(
         struct.pack(
-            "!IIHIIbHH21sbHHIQ",
+            "!IIHIIBHH21sBHHIQ",
             head,
             0x1000,
             0,
@@ -793,7 +794,7 @@ def build_c2d_pkg(cmd_id: int, head: int, seq: int, body: Packet) -> Packet:
             2,
             44 + len(body),
             cmd_id,
-            b"\x00" * 21,
+            bytes(21),
             3,
             0,
             50,
@@ -816,9 +817,10 @@ def encode_qrcode_fetch(
     data = build_c2d_pkg(
         0x31,
         0x11100,
-        seq+1,
+        seq,
         Packet.build(
-            struct.pack("!HIQbHbH", 0, 16, 0, 8, 1, 0, 6),
+            struct.pack("!HIQB", 0, 16, 0, 8),
+            TlvEncoder._pack_lv(0)
             TlvEncoder.t16(apk_info, device.guid),
             TlvEncoder.t1b(),
             TlvEncoder.t1d(),
@@ -827,23 +829,21 @@ def encode_qrcode_fetch(
             TlvEncoder.t35()
         )
     )
+    #print(data.hex())
     data = Packet.build(
         struct.pack(
             "!BB16sHHH",
             2,
             1,
-            os.urandom(16),
+            client._key,
             0x131,
             1,
             len(ECDH.client_public_key),
         ),
         ECDH.client_public_key,
-        rtea.qqtea_encrypt(bytes(data), ECDH.share_key)
+        ECDH.encrypt(bytes(data), ECDH.share_key)
     )
-    data = OICQRequest.build_encoded(
-                0, COMMAND_ID, data, ECDH.id
-            )
-    #data = rtea.qqtea_encrypt(bytes(data), b"\x00" * 16)
+    data = OICQRequest.build_encoded(0, COMMAND_ID, data, ECDH.id)
     return CSsoDataPacket.build(
         0,
         body_type=2,
@@ -858,7 +858,7 @@ def encode_qrcode_fetch(
             extra_data=client._siginfo.tgt,
             body=data
         ),
-        key=b"\x00" * 16
+        key=bytes(16)
     )
 
 

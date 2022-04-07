@@ -35,62 +35,28 @@ class ApkInfo(NamedTuple):
 
 
 ANDROID_PHONE = ApkInfo(
-    apk_id="com.tencent.mobileqq",
+    apk_id="com.tencent.qqlite",
     app_id=16,
     sub_app_id=537066738,
-    version="8.5.0",
+    version="2.0.5",
     build_time=1607689988,
     apk_sign=bytes(
-        [
-            0xA6,
-            0xB7,
-            0x45,
-            0xBF,
-            0x24,
-            0xA2,
-            0xC2,
-            0x77,
-            0x52,
-            0x77,
-            0x16,
-            0xF6,
-            0xF3,
-            0x6E,
-            0xB6,
-            0x8D,
-        ]
+        [166, 183, 69, 191, 36, 162, 194, 119, 82, 119, 22, 246, 243, 110, 182, 141]
     ),
-    sdk_version="6.0.0.2454",
+    sdk_version="6.0.0.236",
     sso_version=15,
-    bitmap=184024956,
+    bitmap=16252796,
     main_sigmap=34869472,
     sub_sigmap=0x10400,
 )
 ANDROID_WATCH = ApkInfo(
     apk_id="com.tencent.mobileqq",
     app_id=16,
-    sub_app_id=537061176,
+    sub_app_id=537064446,
     version="8.2.7",
-    build_time=1571193922,
+    build_time=1559564731,
     apk_sign=bytes(
-        [
-            0xA6,
-            0xB7,
-            0x45,
-            0xBF,
-            0x24,
-            0xA2,
-            0xC2,
-            0x77,
-            0x52,
-            0x77,
-            0x16,
-            0xF6,
-            0xF3,
-            0x6E,
-            0xB6,
-            0x8D,
-        ]
+        [166, 183, 69, 191, 36, 162, 194, 119, 82, 119, 22, 246, 243, 110, 182, 141]
     ),
     sdk_version="6.0.0.2413",
     sso_version=5,
