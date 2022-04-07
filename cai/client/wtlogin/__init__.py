@@ -820,7 +820,7 @@ def encode_qrcode_fetch(
         seq,
         Packet.build(
             struct.pack("!HIQB", 0, 16, 0, 8),
-            TlvEncoder._pack_lv(0)
+            TlvEncoder._pack_lv(b"\x00"),
             TlvEncoder.t16(apk_info, device.guid),
             TlvEncoder.t1b(),
             TlvEncoder.t1d(),
