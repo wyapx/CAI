@@ -16,7 +16,7 @@ from cai.client import Client as client_t
 from cai.settings.device import get_device
 from cai.pb.msf.msg.svc import PbSendMsgResp
 from cai.client.highway import HighWaySession
-from cai.settings.protocol import get_protocol
+from cai.settings.protocol import get_protocol, get_apk_info
 from cai.client.message_service.encoders import build_msg, make_group_msg_pkg
 from cai.client.message_service.models import (
     Element,
@@ -35,7 +35,7 @@ from .error import (
 )
 
 
-def make_client(uin: int, passwd: Union[str, bytes]) -> client_t:
+def make_client(uin: int, passwd: Union[str, bytes], protocol: Optional[str] = None) -> client_t:
     if not (isinstance(passwd, bytes) and len(passwd) == 16):
         # not a vailed md5 passwd
         if isinstance(passwd, bytes):
@@ -43,7 +43,10 @@ def make_client(uin: int, passwd: Union[str, bytes]) -> client_t:
         else:
             passwd = hashlib.md5(passwd.encode()).digest()
     device = get_device(uin)
-    apk_info = get_protocol(uin)
+    if not protocol:
+        apk_info = get_protocol(uin)
+    else:
+        apk_info = get_apk_info(protocol)
     return client_t(uin, passwd, device, apk_info)
 
 
