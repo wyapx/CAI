@@ -379,6 +379,7 @@ class TroopMessageDecoder:
             return
 
         seq = message.head.seq
+        rand = message.body.rich_text.attr.random
         time = message.head.time
         from_uin = message.head.from_uin
         troop = message.head.group_info
@@ -408,6 +409,7 @@ class TroopMessageDecoder:
         return GroupMessage(
             message,
             seq,
+            rand,
             time,
             troop.group_code,
             troop.group_name.decode("utf-8"),

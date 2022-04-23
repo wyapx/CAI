@@ -7,13 +7,16 @@
     https://github.com/cscs181/CAI/blob/master/LICENSE
 """
 
-from typing import List, Union, Optional
+from typing import List, Union, Optional, Tuple
+
+from cai.api.error import BotException
 
 from cai.client import GroupMember
-from cai.client import Group as group_t
-from cai.client.oidb import builder
+from cai.client import Group as group_t, pkg_builder
 
 from .base import BaseAPI
+from ..client.pkg_builder import build_recall_group_msg_pkg
+from ..pb.msf.msg.svc import PbMsgWithDrawResp
 
 
 class Group(BaseAPI):
@@ -85,7 +88,7 @@ class Group(BaseAPI):
     async def set_group_admin(self, group: int, uin: int, is_admin: bool):
         await self.client.send_unipkg_and_wait(
             "OidbSvc.0x55c_1",
-            builder.build_set_admin_pkg(
+            pkg_builder.build_set_admin_pkg(
                 target_uin=uin,
                 group=group,
                 is_admin=is_admin
@@ -95,7 +98,7 @@ class Group(BaseAPI):
     async def mute_member(self, group: int, uin: int, duration: int):
         await self.client.send_unipkg_and_wait(
             "OidbSvc.0x570_8",
-            builder.build_mute_member_pkg(
+            pkg_builder.build_mute_member_pkg(
                 target_uin=uin,
                 group=group,
                 duration=duration
@@ -105,11 +108,27 @@ class Group(BaseAPI):
     async def send_group_nudge(self, group: int, uin: int):
         await self.client.send_unipkg_and_wait(
             "OidbSvc.0xed3",
-            builder.build_send_nudge_pkg(
+            pkg_builder.build_send_nudge_pkg(
                 target_uin=uin,
                 group=group
             )
         )
+
+    async def recall_group_msg(self, group: int, msg: Tuple[int, int, int]):
+        ret = PbMsgWithDrawResp.FromString(
+            (
+                await self.client.send_unipkg_and_wait(
+                    "PbMessageSvc.PbMsgWithDraw",
+                    build_recall_group_msg_pkg(
+                        group,
+                        msg_list=[msg]
+                    ).SerializeToString()
+                )
+            ).data
+        ).group_with_draw[0]
+
+        if ret.result:
+            raise BotException(ret.result, ret.errmsg)
 
 
 __all__ = ["Group"]

@@ -48,6 +48,7 @@ class PrivateMessage(Event):
 class GroupMessage(Event):
     _msg: Msg
     seq: int
+    rand: int
     time: int
     group_id: int
     group_name: str

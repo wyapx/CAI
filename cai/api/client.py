@@ -6,9 +6,10 @@
 .. _LICENSE:
     https://github.com/cscs181/CAI/blob/master/LICENSE
 """
-
+import asyncio
 import hashlib
-from typing import Union, BinaryIO, Optional, Sequence
+import random
+from typing import Union, BinaryIO, Optional, Sequence, Tuple, Dict
 
 from cai import log
 from cai.client import OnlineStatus
@@ -21,7 +22,7 @@ from cai.client.message_service.encoders import build_msg, make_group_msg_pkg
 from cai.client.message_service.models import (
     Element,
     ImageElement,
-    VoiceElement,
+    VoiceElement, GroupMessage,
 )
 
 from .group import Group as _Group
@@ -32,6 +33,7 @@ from .error import (
     BotMutedException,
     AtAllLimitException,
     GroupMsgLimitException,
+    BotException,
 )
 
 
@@ -54,6 +56,13 @@ class Client(_Login, _Friend, _Group, _Events):
     def __init__(self, client: client_t):
         self.client = client
         self._highway_session = HighWaySession(client, logger=log.highway)
+        self._msg_fut: Dict[int, asyncio.Future] = {}  # rand: seq
+        self.add_event_listener(self._internal_handler)
+
+    async def _internal_handler(self, _, ev):
+        if isinstance(ev, GroupMessage):
+            if ev.rand in self._msg_fut:
+                self._msg_fut[ev.rand].set_result(ev.seq)
 
     @property
     def connected(self) -> bool:
@@ -63,28 +72,43 @@ class Client(_Login, _Friend, _Group, _Events):
     def status(self) -> Optional[OnlineStatus]:
         return self.client.status
 
-    async def send_group_msg(self, gid: int, msg: Sequence[Element]):
+    async def send_group_msg(self, gid: int, msg: Sequence[Element]) -> Tuple[int, int, int]:
+        """
+        Return:
+            Tuple [
+                sequence(int),
+                random(int),
+                send_time(int)
+            ]
+        """
         # todo: split long msg
-        resp: PbSendMsgResp = PbSendMsgResp.FromString(
-            (
-                await self.client.send_unipkg_and_wait(
-                    "MessageSvc.PbSendMsg",
-                    make_group_msg_pkg(
-                        self.client.next_seq(), gid, build_msg(msg)
-                    ).SerializeToString(),
-                )
-            ).data
-        )
+        seq, rand, fut = self.client.next_seq(), random.randint(1000, 1000000), asyncio.Future()
+        self._msg_fut[rand] = fut
+        try:
+            resp: PbSendMsgResp = PbSendMsgResp.FromString(
+                (
+                    await self.client.send_unipkg_and_wait(
+                        "MessageSvc.PbSendMsg",
+                        make_group_msg_pkg(
+                            seq, gid, rand, build_msg(msg)
+                        ).SerializeToString(),
+                        seq=seq
+                    )
+                ).data
+            )
 
-        if resp.result == 120:
-            raise BotMutedException
-        elif resp.result == 121:
-            raise AtAllLimitException
-        elif resp.result == 299:
-            raise GroupMsgLimitException
-        else:
-            # todo: store msg
-            return resp
+            if resp.result == 0:
+                return await fut, rand, resp.send_time
+            elif resp.result == 120:
+                raise BotMutedException
+            elif resp.result == 121:
+                raise AtAllLimitException
+            elif resp.result == 299:
+                raise GroupMsgLimitException
+            else:
+                raise BotException(resp.result, resp.errmsg)
+        finally:
+            del self._msg_fut[rand]
 
     async def upload_image(self, group_id: int, file: BinaryIO) -> ImageElement:
         return await self._highway_session.upload_image(file, group_id)

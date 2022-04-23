@@ -40,7 +40,7 @@ def build_set_admin_pkg(target_uin: int, group: int, is_admin: bool) -> bytes:
 # MuteMember, OidbSvc.0x570_8
 def build_mute_member_pkg(target_uin: int, group: int, duration: int) -> bytes:
     if duration < 0:
-        return ValueError("duration must be a positive value")
+        raise ValueError("duration must be a positive value")
     return build_oidb_sso_packet(
         1392, 8,
         struct.pack(
