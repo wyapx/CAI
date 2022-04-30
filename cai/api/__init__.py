@@ -9,6 +9,6 @@ This module wraps the client methods to provide easier control (high-level api).
     https://github.com/cscs181/CAI/blob/master/LICENSE
 """
 
-from .client import Client, make_client
+from .client import Client
 
-__all__ = ["Client", "make_client"]
+__all__ = ["Client"]
