@@ -9,7 +9,7 @@
 import asyncio
 import hashlib
 import random
-from typing import Union, BinaryIO, Optional, Sequence, Tuple, Dict
+from typing import Union, BinaryIO, Optional, Sequence, Tuple, Dict, NoReturn
 
 from cai import log
 from cai.client import OnlineStatus
@@ -37,9 +37,9 @@ from .error import (
 )
 
 
-def make_client(uin: int, passwd: Union[str, bytes], protocol: Optional[str] = None) -> client_t:
+def _make_client(uin: int, passwd: Union[str, bytes], protocol: Optional[str] = None) -> client_t:
     if not (isinstance(passwd, bytes) and len(passwd) == 16):
-        # not a vailed md5 passwd
+        # not a valid md5 passwd
         if isinstance(passwd, bytes):
             passwd = hashlib.md5(passwd).digest()
         else:
@@ -53,7 +53,16 @@ def make_client(uin: int, passwd: Union[str, bytes], protocol: Optional[str] = N
 
 
 class Client(_Login, _Friend, _Group, _Events):
-    def __init__(self, client: client_t):
+    def __init__(
+        self,
+        uin: int,
+        passwd: Union[str, bytes],
+        protocol: Optional[str] = None,
+        *, max_reconnections=5
+    ):
+        client = _make_client(uin, passwd, protocol)
+        client._max_reconnections = max(max_reconnections, 0)
+
         self.client = client
         self._highway_session = HighWaySession(client, logger=log.highway)
         self._msg_fut: Dict[int, asyncio.Future] = {}  # rand: seq
@@ -98,7 +107,11 @@ class Client(_Login, _Friend, _Group, _Events):
             )
 
             if resp.result == 0:
-                return await fut, rand, resp.send_time
+                return (
+                    await asyncio.wait_for(fut, 5),
+                    rand,
+                    resp.send_time
+                )
             elif resp.result == 120:
                 raise BotMutedException
             elif resp.result == 121:
@@ -116,7 +129,7 @@ class Client(_Login, _Friend, _Group, _Events):
     async def upload_voice(self, group_id: int, file: BinaryIO) -> VoiceElement:
         return await self._highway_session.upload_voice(file, group_id)
 
-    async def close(self):
+    async def close(self) -> NoReturn:
         """Stop Client"""
         await self.client.close()
 
@@ -125,7 +138,7 @@ class Client(_Login, _Friend, _Group, _Events):
         status: Union[int, OnlineStatus],
         battery_status: Optional[int] = None,
         is_power_connected: bool = False,
-    ) -> None:
+    ) -> NoReturn:
         """Change client status.
 
         This function wraps the :meth:`~cai.client.client.Client.register`
