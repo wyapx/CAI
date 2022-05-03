@@ -58,11 +58,8 @@ class Client(_Login, _Friend, _Group, _Events):
         uin: int,
         passwd: Union[str, bytes],
         protocol: Optional[str] = None,
-        *, max_reconnections=5
     ):
-        client = _make_client(uin, passwd, protocol)
-        client._max_reconnections = max(max_reconnections, 0)
-
+        client = _make_client(uin, passwd, protocol=protocol)
         self.client = client
         self._highway_session = HighWaySession(client, logger=log.highway)
         self._msg_fut: Dict[int, asyncio.Future] = {}  # rand: seq

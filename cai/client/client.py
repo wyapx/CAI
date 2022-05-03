@@ -148,8 +148,7 @@ class Client:
         device: DeviceInfo,
         apk_info: ApkInfo,
         *,
-        auto_reconnect: bool = True,
-        max_reconnections: int = 3,
+        auto_reconnect: bool = True
     ):
         # client info
         self._device: DeviceInfo = device
@@ -202,7 +201,6 @@ class Client:
         # connection info
         self._reconnect: bool = auto_reconnect
         self._reconnect_times: int = 0
-        self._max_reconnections: int = max_reconnections
         self._closed: asyncio.Event = asyncio.Event()
 
     def __str__(self) -> str:
@@ -337,18 +335,9 @@ class Client:
 
     def _recv_done_cb(self, task: asyncio.Task):
         if self._reconnect:
-            if (
-                self._max_reconnections
-                and self._reconnect_times >= self._max_reconnections
-            ):
-                log.network.warning(
-                    "Max reconnections reached, stop reconnecting"
-                )
-                asyncio.create_task(self.disconnect())
-            else:
-                log.network.warning("receiver stopped, try to reconnect")
-                self._reconnect_times += 1
-                asyncio.create_task(self.reconnect_and_login())
+            log.network.warning("receiver stopped, try to reconnect")
+            self._reconnect_times += 1
+            asyncio.create_task(self.reconnect_and_login())
         else:
             log.network.warning("receiver stopped")
             asyncio.create_task(self.close())
