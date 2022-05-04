@@ -91,8 +91,8 @@ class PushNotifyCommand(Command):
 
         try:
             # data offset 4 in source? test get 15
-            # req_packet = RequestPacketVersion2.decode(data[4:])
-            req_packet = RequestPacketVersion2.decode(data[15:])
+            req_packet = RequestPacketVersion2.decode(data[4:])
+            # req_packet = RequestPacketVersion2.decode(data[15:])
             push_offline_request = RequestPushNotify.decode(
                 req_packet.data["req_PushNotify"][  # type: ignore
                     "PushNotifyPack.RequestPushNotify"
