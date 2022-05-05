@@ -1,7 +1,7 @@
 from typing import Optional
 from dataclasses import dataclass
 
-from .base import Event
+from .base import Event, BotEvent
 
 
 @dataclass
@@ -15,3 +15,14 @@ class NudgeEvent(Event):
     @property
     def type(self) -> str:
         return "NudgeEvent"
+
+
+@dataclass
+class BotOnlineEvent(BotEvent):
+    qq: int
+
+
+@dataclass
+class BotOfflineEvent(BotEvent):
+    qq: int
+    reconnect: bool

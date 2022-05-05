@@ -47,6 +47,7 @@ from cai.exceptions import (
     LoginSMSRequestError,
     GroupMemberListException,
 )
+from .events.common import BotOnlineEvent, BotOfflineEvent
 
 from .packet import UniPacket, IncomingPacket
 from .command import Command, _packet_to_command
@@ -334,6 +335,11 @@ class Client:
         task.add_done_callback(self._recv_done_cb)
 
     def _recv_done_cb(self, task: asyncio.Task):
+        # connection lost
+        self.dispatch_event(BotOfflineEvent(
+            qq=self.uin,
+            reconnect=self._reconnect
+        ))
         if self._reconnect:
             log.network.warning("receiver stopped, try to reconnect")
             self._reconnect_times += 1
@@ -389,6 +395,10 @@ class Client:
             log.network.warning("register failed, trying to re-login")
             await self.reconnect(change_server=True, server=server)
             await self.login()
+        if self.connected:
+            self.dispatch_event(BotOnlineEvent(
+                qq=self.uin
+            ))
 
     async def close(self) -> None:
         """Close the client and logout."""
@@ -568,6 +578,9 @@ class Client:
         if isinstance(response, LoginSuccess):
             log.logger.info(f"{self.nick}({self.uin}) 登录成功！")
             await self._init()
+            self.dispatch_event(BotOnlineEvent(
+                qq=self.uin
+            ))
             return response
         elif isinstance(response, NeedCaptcha):
             if response.verify_url:

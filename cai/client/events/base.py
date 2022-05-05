@@ -17,3 +17,8 @@ class Event:
     @property
     def type(self) -> str:
         return self.__class__.__name__
+
+
+@dataclass
+class BotEvent(Event):
+    ...
