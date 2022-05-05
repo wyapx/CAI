@@ -254,3 +254,19 @@ class GroupFileElement(Element):
     @property
     def type(self) -> str:
         return "group_file"
+
+
+@dataclass
+class VideoElement(Element):
+    file_name: str
+    file_md5: bytes
+    file_uuid: bytes
+    file_size: int
+    file_time: int  # sec
+    source: str  # camera or
+    thump_size: int
+    thump_md5: bytes
+
+    @property
+    def type(self) -> str:
+        return "video"

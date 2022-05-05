@@ -40,7 +40,7 @@ from .models import (
     CustomDataElement,
     FlashImageElement,
     SmallEmojiElement,
-    GroupFileElement,
+    GroupFileElement, VideoElement,
 )
 
 
@@ -115,6 +115,20 @@ def parse_elements(elems: Sequence[Elem], ptt: Optional[Ptt]) -> List[Element]:
                     )
             else:
                 res.append(TextElement(elem.text.str.decode("utf-8")))
+        elif elem.HasField("video_file"):
+            vf = elem.video_file
+            return [
+                VideoElement(
+                    file_name=vf.file_name.decode(),
+                    file_size=vf.file_size,
+                    file_md5=vf.file_md5,
+                    file_uuid=vf.file_uuid,
+                    file_time=vf.file_time,
+                    source=vf.source.decode(),
+                    thump_size=vf.thumb_file_size,
+                    thump_md5=vf.thumb_file_md5
+                )
+            ]
         elif elem.HasField("rich_msg"):
             if elem.rich_msg.template_1[0]:
                 content = zlib.decompress(elem.rich_msg.template_1[1:])
