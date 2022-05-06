@@ -13,6 +13,7 @@ from cai.pb.im.msg.msg_body import (
     MsgBody,
     RichMsg,
     RichText,
+    VideoFile,
     PlainText,
     CommonElem,
     CustomFace,
@@ -128,6 +129,24 @@ def build_msg(elements: Sequence[models.Element]) -> MsgBody:
         elif isinstance(e, models.VoiceElement):
             ptt = e.to_ptt()
             break
+        elif isinstance(e, models.VideoElement):
+            ret.append(
+                Elem(
+                    video_file=VideoFile(
+                        file_uuid=e.file_uuid,
+                        file_md5=e.file_md5,
+                        file_name=e.file_name.encode(),
+                        file_format=3,
+                        file_time=e.file_time,
+                        file_size=e.file_size,
+                        thumb_width=1280,
+                        thumb_height=768,
+                        thumb_file_md5=e.thumb_md5,
+                        thumb_file_size=e.thumb_size,
+                        source=b"camera"  # const?
+                    )
+                )
+            )
         elif isinstance(e, models.CustomDataElement):
             ret.append(
                 Elem(

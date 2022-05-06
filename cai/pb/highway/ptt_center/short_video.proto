@@ -1,0 +1,181 @@
+syntax = "proto2";
+
+// PttCenterService(modify)
+
+message DataHole {
+  optional uint64 begin = 1;
+  optional uint64 end = 2;
+}
+
+message ExtensionReq {
+  optional uint32 subBusiType = 1;
+  optional uint32 userCnt = 2;
+}
+
+message PttShortVideoAddr {
+  optional uint32 hostType = 1;
+  repeated string host = 10;
+  optional string urlArgs = 11;
+  repeated string hostIpv6 = 21;
+  repeated string domain = 22;
+}
+
+message PttShortVideoDeleteReq {
+  optional uint64 fromuin = 1;
+  optional uint64 touin = 2;
+  optional uint32 chatType = 3;
+  optional uint32 clientType = 4;
+  optional string fileid = 5;
+  optional uint64 groupCode = 6;
+  optional uint32 agentType = 7;
+  optional bytes fileMd5 = 8;
+  optional uint32 businessType = 9;
+}
+
+message PttShortVideoDeleteResp {
+  optional int32 retCode = 1;
+  optional string retMsg = 2;
+}
+
+message PttShortVideoDownloadReq {
+  optional uint64 fromuin = 1;
+  optional uint64 touin = 2;
+  optional uint32 chatType = 3;
+  optional uint32 clientType = 4;
+  optional string fileid = 5;
+  optional uint64 groupCode = 6;
+  optional uint32 agentType = 7;
+  optional bytes fileMd5 = 8;
+  optional uint32 businessType = 9;
+  optional uint32 fileType = 10;
+  optional uint32 downType = 11;
+  optional uint32 sceneType = 12;
+  optional uint32 needInnerAddr = 13;
+  optional uint32 reqTransferType = 14;
+  optional uint32 reqHostType = 15;
+  optional uint32 flagSupportLargeSize = 20;
+  optional uint32 flagClientQuicProtoEnable = 30;
+}
+
+message PttShortVideoDownloadResp {
+  optional int32 retCode = 1;
+  optional string retMsg = 2;
+  repeated PttShortVideoIpList sameAreaOutAddr = 3;
+  repeated PttShortVideoIpList diffAreaOutAddr = 4;
+  optional bytes downloadkey = 5;
+  optional bytes fileMd5 = 6;
+  repeated PttShortVideoIpList sameAreaInnerAddr = 7;
+  repeated PttShortVideoIpList diffAreaInnerAddr = 8;
+  optional PttShortVideoAddr downloadAddr = 9;
+  optional bytes encryptKey = 10;
+  optional uint32 flagServerQuicProtoEnable = 30;
+  optional bytes serverQuicPara = 31;
+}
+
+message PttShortVideoFileInfo {
+  optional string fileName = 1;
+  optional bytes fileMd5 = 2;
+  optional bytes thumbFileMd5 = 3;
+  optional uint64 fileSize = 4;
+  optional uint32 fileResLength = 5;
+  optional uint32 fileResWidth = 6;
+  optional uint32 fileFormat = 7;
+  optional uint32 fileTime = 8;
+  optional uint64 thumbFileSize = 9;
+  optional bytes decryptVideoMd5 = 10;
+  optional uint64 decryptFileSize = 11;
+  optional bytes decryptThumbMd5 = 12;
+  optional uint64 decryptThumbSize = 13;
+}
+
+message PttShortVideoIpList {
+  optional uint32 ip = 1;
+  optional uint32 port = 2;
+}
+
+message PttShortVideoRetweetReq {
+  optional uint64 fromUin = 1;
+  optional uint64 toUin = 2;
+  optional uint32 fromChatType = 3;
+  optional uint32 toChatType = 4;
+  optional uint32 fromBusiType = 5;
+  optional uint32 toBusiType = 6;
+  optional uint32 clientType = 7;
+  optional PttShortVideoFileInfo PttShortVideoFileInfo = 8;
+  optional uint32 agentType = 9;
+  optional string fileid = 10;
+  optional uint64 groupCode = 11;
+  optional uint32 flagSupportLargeSize = 20;
+}
+
+message PttShortVideoRetweetResp {
+  optional int32 retCode = 1;
+  optional string retMsg = 2;
+  repeated PttShortVideoIpList sameAreaOutAddr = 3;
+  repeated PttShortVideoIpList diffAreaOutAddr = 4;
+  optional string fileid = 5;
+  optional bytes ukey = 6;
+  optional uint32 fileExist = 7;
+  repeated PttShortVideoIpList sameAreaInnerAddr = 8;
+  repeated PttShortVideoIpList diffAreaInnerAddr = 9;
+  repeated DataHole dataHole = 10;
+  optional uint32 isHotFile = 11;
+  optional uint32 longVideoCarryWatchPointType = 12;
+}
+
+message PttShortVideoUploadReq {
+  optional uint64 fromuin = 1;
+  optional uint64 touin = 2;
+  optional uint32 chatType = 3;
+  optional uint32 clientType = 4;
+  optional PttShortVideoFileInfo PttShortVideoFileInfo = 5;
+  optional uint64 groupCode = 6;
+  optional uint32 agentType = 7;
+  optional uint32 businessType = 8;
+  optional bytes encryptKey = 9;
+  optional uint32 subBusinessType = 10;
+  optional uint32 flagSupportLargeSize = 20;
+}
+
+message PttShortVideoUploadResp {
+  optional int32 retCode = 1;
+  optional string retMsg = 2;
+  repeated PttShortVideoIpList sameAreaOutAddr = 3;
+  repeated PttShortVideoIpList diffAreaOutAddr = 4;
+  optional string fileid = 5;
+  optional bytes ukey = 6;
+  optional uint32 fileExist = 7;
+  repeated PttShortVideoIpList sameAreaInnerAddr = 8;
+  repeated PttShortVideoIpList diffAreaInnerAddr = 9;
+  repeated DataHole dataHole = 10;
+  optional bytes encryptKey = 11;
+  optional uint32 isHotFile = 12;
+  optional uint32 longVideoCarryWatchPointType = 13;
+}
+
+message QuicParameter {
+  optional uint32 enableQuic = 1;
+  optional uint32 encryptionVer = 2;
+  optional uint32 fecVer = 3;
+}
+
+message ReqBody {
+  optional uint32 cmd = 1;
+  optional uint32 seq = 2;
+  optional PttShortVideoUploadReq PttShortVideoUpload_Req = 3;
+  optional PttShortVideoDownloadReq PttShortVideoDownload_Req = 4;
+  repeated PttShortVideoRetweetReq shortVideoRetweetReq = 5;
+  repeated PttShortVideoDeleteReq shortVideoDeleteReq = 6;
+  repeated ExtensionReq extensionReq = 100;
+}
+
+message RspBody {
+  optional uint32 cmd = 1;
+  optional uint32 seq = 2;
+  optional PttShortVideoUploadResp PttShortVideoUpload_Resp = 3;
+  optional PttShortVideoDownloadResp PttShortVideoDownload_Resp = 4;
+  repeated PttShortVideoRetweetResp shortVideoRetweetResp = 5;
+  repeated PttShortVideoDeleteResp shortVideoDeleteResp = 6;
+  optional uint32 changeChannel = 100;
+  optional uint32 allowRetry = 101;
+}

@@ -22,7 +22,7 @@ from cai.client.message_service.encoders import build_msg, make_group_msg_pkg
 from cai.client.message_service.models import (
     Element,
     ImageElement,
-    VoiceElement, GroupMessage,
+    VoiceElement, GroupMessage, VideoElement,
 )
 
 from .group import Group as _Group
@@ -125,6 +125,9 @@ class Client(_Login, _Friend, _Group, _Events):
 
     async def upload_voice(self, group_id: int, file: BinaryIO) -> VoiceElement:
         return await self._highway_session.upload_voice(file, group_id)
+
+    async def upload_video(self, group_id: int, file: BinaryIO, thumb: BinaryIO) -> VideoElement:
+        return await self._highway_session.upload_video(file, thumb, group_id)
 
     async def close(self) -> NoReturn:
         """Stop Client"""

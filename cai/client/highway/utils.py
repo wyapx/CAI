@@ -4,18 +4,19 @@ from hashlib import md5
 from typing import Any, Tuple, BinaryIO, Awaitable
 
 
-def calc_file_md5_and_length(file: BinaryIO, bs=4096) -> Tuple[bytes, int]:
-    try:
-        fm, length = md5(), 0
-        while True:
-            bl = file.read(bs)
-            fm.update(bl)
-            length += len(bl)
-            if len(bl) != bs:
-                break
-        return fm.digest(), length
-    finally:
-        file.seek(0)
+def calc_file_md5_and_length(*files: BinaryIO, bs=4096) -> Tuple[bytes, int]:
+    fm, length = md5(), 0
+    for f in files:
+        try:
+            while True:
+                bl = f.read(bs)
+                fm.update(bl)
+                length += len(bl)
+                if len(bl) != bs:
+                    break
+        finally:
+            f.seek(0)
+    return fm.digest(), length
 
 
 def itoa(i: int) -> str:  # int to address(str)

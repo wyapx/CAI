@@ -1,4 +1,10 @@
 from cai.pb.im.cs.cmd0x388 import ReqBody, TryUpImgReq, TryUpPttReq
+from cai.pb.highway.ptt_center import (
+    PttShortVideoUploadReq,
+    PttShortVideoFileInfo,
+    ExtensionReq,
+    ReqBody as VideoReqBody
+)
 from typing import Sequence, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -78,4 +84,44 @@ def encode_upload_voice_req(
                 new_up_chan=True,
             )
         ]
+    )
+
+
+def encode_video_upload_req(
+    seq: int,
+    from_uin: int,
+    to_uin: int,
+    video_md5: bytes,
+    thumb_md5: bytes,
+    video_size: int,
+    thumb_size: int,
+) -> VideoReqBody:
+    return VideoReqBody(
+        cmd=300,
+        seq=seq,
+        PttShortVideoUpload_Req=PttShortVideoUploadReq(
+            fromuin=from_uin,
+            touin=to_uin,
+            chatType=1,
+            clientType=2,
+            groupCode=to_uin,
+            businessType=1,
+            flagSupportLargeSize=1,
+            PttShortVideoFileInfo=PttShortVideoFileInfo(
+                fileName=video_md5.hex() + ".mp4",
+                fileMd5=video_md5,
+                thumbFileMd5=thumb_md5,
+                fileSize=video_size,
+                # will be parse info?
+                fileResLength=1280,
+                fileResWidth=760,
+                fileFormat=3,
+                fileTime=120,
+                thumbFileSize=thumb_size
+            )
+        ),
+        extensionReq=[ExtensionReq(
+            subBusiType=0,
+            userCnt=1
+        )]
     )

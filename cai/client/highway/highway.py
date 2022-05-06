@@ -1,16 +1,20 @@
 import asyncio
 import logging
 from hashlib import md5
+import random
 from typing import TYPE_CHECKING, List, Tuple, BinaryIO, Optional
+
+import rtea
 
 from cai.utils.image import decoder
 from cai.pb.highway.protocol.highway_head_pb2 import highway_head
 
-from .encoders import encode_upload_img_req, encode_upload_voice_req
+from .encoders import encode_upload_img_req, encode_upload_voice_req, encode_video_upload_req
 from .frame import read_frame, write_frame
 from .utils import to_id, timeit, calc_file_md5_and_length
-from ..message_service.models import ImageElement, VoiceElement
-from .decoders import decode_upload_ptt_resp, decode_upload_image_resp
+from ..message_service.models import ImageElement, VoiceElement, VideoElement
+from .decoders import decode_upload_ptt_resp, decode_upload_image_resp, decode_video_upload_resp
+from ...pb.highway.ptt_center import PttShortVideoUploadResp
 
 if TYPE_CHECKING:
     from cai.client.client import Client
@@ -51,19 +55,26 @@ class HighWaySession:
             for ip in iplist.ip_list:
                 self._session_addr_list.append((ip.ip, ip.port))
 
+    def _encrypt_ext(self, ext: bytes) -> bytes:
+        if not self._session_key:
+            raise KeyError("session key not set, try again later?")
+        return rtea.qqtea_encrypt(ext, self._session_key)
+
     async def _upload_controller(
         self,
-        addrs: List[Tuple[str, int]],
-        file: BinaryIO,
+        *files: BinaryIO,
         cmd_id: int,
         ticket: bytes,
         ext=None,
+        addrs: List[Tuple[str, int]] = None
     ) -> Optional[bytes]:
+        if not addrs:
+            addrs = self._session_addr_list
         for addr in addrs:
             try:
                 t, d = await timeit(
                     self.bdh_uploader(
-                        b"PicUp.DataUp", addr, file, cmd_id, ticket, ext
+                        b"PicUp.DataUp", addr, list(files), cmd_id, ticket, ext
                     )
                 )
                 self.logger.info("upload complete, use %fms" % (t * 1000))
@@ -72,7 +83,8 @@ class HighWaySession:
                 self.logger.error(f"server {addr[0]}:{addr[1]} timeout")
                 continue
             finally:
-                file.seek(0)
+                for f in files:
+                    f.seek(0)
         else:
             raise ConnectionError("cannot upload, all server failure")
 
@@ -93,7 +105,10 @@ class HighWaySession:
             self.logger.debug("file not found, uploading...")
 
             await self._upload_controller(
-                ret.uploadAddr, file, 2, ret.uploadKey  # send to group
+                file,
+                cmd_id=2,  # send to group
+                ticket=ret.uploadKey,
+                addrs=ret.uploadAddr
             )
 
         if ret.hasMetaData:
@@ -123,11 +138,10 @@ class HighWaySession:
             self._decode_bdh_session()
         ret = decode_upload_ptt_resp(
             await self._upload_controller(
-                self._session_addr_list,
                 file,
-                29,  # send to group
-                self._session_sig,
-                ext,
+                cmd_id=29,  # send to group
+                ticket=self._session_sig,
+                ext=ext,
             )
         )
         if ret.resultCode:
@@ -142,32 +156,81 @@ class HighWaySession:
             url=f"https://grouptalk.c2c.qq.com/?ver=0&rkey={ret.uploadKey.hex()}&filetype=4%voice_codec=0",
         )
 
+    async def upload_video(self, file: BinaryIO, thumb: BinaryIO, gid: int) -> VideoElement:
+        thumb_md5, thumb_size = calc_file_md5_and_length(thumb)
+        video_md5, video_size = calc_file_md5_and_length(file)
+        req = encode_video_upload_req(
+            random.randint(300000000, 900000000),
+            self._client.uin, gid,
+            video_md5, thumb_md5,
+            video_size, thumb_size
+        )
+        ret = decode_video_upload_resp(
+            (await self._client.send_unipkg_and_wait(
+                "PttCenterSvr.GroupShortVideoUpReq",
+                req.SerializeToString()
+            )).data
+        ).PttShortVideoUpload_Resp
+        if ret.retCode:
+            raise ConnectionError(ret.retCode, ret.retMsg)  # -327: file too big
+        elif ret.fileExist:
+            file_id = ret.fileid.encode()
+        else:
+            if not (self._session_key and self._session_sig):
+                self._decode_bdh_session()
+            ext_data = await self._upload_controller(
+                thumb, file,
+                cmd_id=25,
+                ticket=self._session_sig,
+                ext=self._encrypt_ext(req.PttShortVideoUpload_Req.SerializeToString())
+            )
+            resp = PttShortVideoUploadResp.FromString(ext_data)
+            if resp.retCode:
+                raise ConnectionError(ret.retCode, ret.retMsg)
+            file_id = resp.fileid.encode()
+        return VideoElement(
+            video_md5.hex() + ".mp4",
+            video_md5,
+            file_id,
+            video_size,
+            120,  # not parse
+            "server",
+            thumb_size,
+            thumb_md5
+        )
+
     async def bdh_uploader(
         self,
         cmd: bytes,
         addr: Tuple[str, int],
-        file: BinaryIO,
+        files: List[BinaryIO],
         cmd_id: int,
         ticket: bytes,
         ext: bytes = None,
         *,
         block_size=65535,
     ) -> Optional[bytes]:
-        fmd5, fl = calc_file_md5_and_length(file)
+        fmd5, fl = calc_file_md5_and_length(*files)
         reader, writer = await asyncio.open_connection(*addr)
         bc = 0
+        total_transfer = 0
+        current_file = files.pop(0)
         try:
             while True:
-                bl = file.read(block_size)
-                if not bl:
+                bl = current_file.read(block_size)
+                if not bl and not files:
                     return ext
+                elif not bl:
+                    current_file = files.pop(0)
+                    continue
+
                 head = highway_head.ReqDataHighwayHead(
                     basehead=_create_highway_header(
                         cmd, 4096, cmd_id, self._client
                     ),
                     seghead=highway_head.SegHead(
                         filesize=fl,
-                        dataoffset=bc * block_size,
+                        dataoffset=total_transfer,
                         datalength=len(bl),
                         serviceticket=ticket,
                         md5=md5(bl).digest(),
@@ -178,11 +241,12 @@ class HighWaySession:
 
                 writer.write(write_frame(head.SerializeToString(), bl))
                 await writer.drain()
+                total_transfer += len(bl)
 
                 resp, data = await read_frame(reader)
                 if resp.errorCode:
                     raise ConnectionError(resp.errorCode, "upload error", resp)
-                if resp and ext:
+                elif resp:
                     if resp.rspExtendinfo:
                         ext = resp.rspExtendinfo
                     if resp.seghead:

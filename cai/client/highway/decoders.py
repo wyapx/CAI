@@ -1,4 +1,5 @@
 from cai.pb.im.cs.cmd0x388 import RspBody
+from cai.pb.highway.ptt_center import RspBody as VideoUpRsp
 
 from .utils import itoa
 from .models import UploadResponse, ImageUploadResponse
@@ -51,3 +52,7 @@ def decode_upload_ptt_resp(data: bytes) -> UploadResponse:
 
 def decode_d388_rsp(data: bytes) -> RspBody:
     return RspBody.FromString(data)
+
+
+def decode_video_upload_resp(data: bytes) -> VideoUpRsp:
+    return VideoUpRsp.FromString(data)
