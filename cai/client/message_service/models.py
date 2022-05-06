@@ -264,8 +264,8 @@ class VideoElement(Element):
     file_size: int
     file_time: int  # sec
     source: str  # camera or
-    thump_size: int
-    thump_md5: bytes
+    thumb_size: int
+    thumb_md5: bytes
 
     @property
     def type(self) -> str:

@@ -125,8 +125,8 @@ def parse_elements(elems: Sequence[Elem], ptt: Optional[Ptt]) -> List[Element]:
                     file_uuid=vf.file_uuid,
                     file_time=vf.file_time,
                     source=vf.source.decode(),
-                    thump_size=vf.thumb_file_size,
-                    thump_md5=vf.thumb_file_md5
+                    thumb_size=vf.thumb_file_size,
+                    thumb_md5=vf.thumb_file_md5
                 )
             ]
         elif elem.HasField("rich_msg"):
