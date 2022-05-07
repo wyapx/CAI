@@ -191,7 +191,7 @@ def parse_elements(elems: Sequence[Elem], ptt: Optional[Ptt]) -> List[Element]:
                         height=elem.custom_face.height,
                         md5=elem.custom_face.md5,
                         url="https://gchat.qpic.cn/gchatpic_new/0/0-0-"
-                        + elem.custom_face.md5.decode().upper()
+                        + elem.custom_face.md5.hex().upper()
                         + "/0",
                     )
                 )
