@@ -147,6 +147,9 @@ def build_msg(elements: Sequence[models.Element]) -> MsgBody:
                     )
                 )
             )
+            ret.append(  # fallback info
+                Elem(text=PlainText(str="[视频短片]请使用新版手机QQ查看".encode()))
+            )
         elif isinstance(e, models.CustomDataElement):
             ret.append(
                 Elem(
