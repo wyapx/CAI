@@ -10,6 +10,7 @@ from cai.pb.im.msg.service.comm_elem import (
 )
 from cai.pb.im.msg.msg_body import (
     Elem,
+    Face,
     MsgBody,
     RichMsg,
     RichText,
@@ -19,7 +20,7 @@ from cai.pb.im.msg.msg_body import (
     CustomFace,
     ShakeWindow,
     LightAppElem,
-    OpenQQData
+    OpenQQData,
 )
 
 from . import models
@@ -108,6 +109,14 @@ def build_msg(elements: Sequence[models.Element]) -> MsgBody:
             ret.append(Elem(shake_window=ShakeWindow(type=e.stype, uin=e.uin)))
             ret.append(  # fallback info
                 Elem(text=PlainText(str="[窗口抖动]请使用新版手机QQ查看".encode()))
+            )
+        elif isinstance(e, models.FaceElement):
+            ret.append(
+                Elem(
+                    face=Face(
+                        index=e.id
+                    )
+                )
             )
         elif isinstance(e, models.PokeElement):
             ret.append(
