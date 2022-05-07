@@ -14,6 +14,7 @@ from cai.pb.im.msg.msg_body import (
     MsgBody,
     RichMsg,
     RichText,
+    SourceMsg,
     VideoFile,
     PlainText,
     CommonElem,
@@ -159,6 +160,19 @@ def build_msg(elements: Sequence[models.Element]) -> MsgBody:
             ret.append(  # fallback info
                 Elem(text=PlainText(str="[视频短片]请使用新版手机QQ查看".encode()))
             )
+        elif isinstance(e, models.ReplyElement):
+            ret.append(
+                Elem(
+                    src_msg=SourceMsg(
+                        orig_seqs=[e.seq],
+                        sender_uin=e.sender,
+                        time=e.time,
+                        flag=1,
+                        elems=build_msg(e.message).rich_text.elems
+                    )
+                )
+            )
+            # need fallback
         elif isinstance(e, models.CustomDataElement):
             ret.append(
                 Elem(
