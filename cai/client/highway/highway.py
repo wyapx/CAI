@@ -1,10 +1,10 @@
+import random
 import asyncio
 import logging
 from hashlib import md5
-import random
 from typing import TYPE_CHECKING, List, Tuple, BinaryIO, Optional
 
-import rtea
+from rtea import qqtea_encrypt
 
 from cai.utils.image import decoder
 from cai.pb.highway.protocol.highway_head_pb2 import highway_head
@@ -58,7 +58,7 @@ class HighWaySession:
     def _encrypt_ext(self, ext: bytes) -> bytes:
         if not self._session_key:
             raise KeyError("session key not set, try again later?")
-        return rtea.qqtea_encrypt(ext, self._session_key)
+        return qqtea_encrypt(ext, self._session_key)
 
     async def _upload_controller(
         self,
@@ -176,6 +176,8 @@ class HighWaySession:
         elif ret.fileExist:
             file_id = ret.fileid.encode()
         else:
+            self.logger.debug("file not found, uploading...")
+
             if not (self._session_key and self._session_sig):
                 self._decode_bdh_session()
             ext_data = await self._upload_controller(
@@ -187,6 +189,7 @@ class HighWaySession:
             resp = PttShortVideoUploadResp.FromString(ext_data)
             if resp.retCode:
                 raise ConnectionError(ret.retCode, ret.retMsg)
+
             file_id = resp.fileid.encode()
         return VideoElement(
             video_md5.hex() + ".mp4",
@@ -246,7 +249,7 @@ class HighWaySession:
                 resp, data = await read_frame(reader)
                 if resp.errorCode:
                     raise ConnectionError(resp.errorCode, "upload error", resp)
-                elif resp:
+                elif resp and ext:
                     if resp.rspExtendinfo:
                         ext = resp.rspExtendinfo
                     if resp.seghead:
