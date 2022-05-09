@@ -8,17 +8,16 @@ This module is used to get server list and choose the best one.
     https://github.com/cscs181/CAI/blob/master/LICENSE
 """
 import asyncio
-import http.client
 from io import BytesIO
 from typing import List, Tuple, Union, Iterable, Optional, Container
 
 from jce import types
 from rtea import qqtea_decrypt, qqtea_encrypt
 
-from cai.connection import connect
 from cai.settings.device import new_device
 from cai.exceptions import SsoServerException
 from cai.settings.protocol import get_apk_info
+from cai.utils.httpcat import HttpCat
 from cai.utils.jce import RequestPacketVersion3
 from cai.connection.utils import tcp_latency_test
 
@@ -90,31 +89,24 @@ async def get_sso_list() -> SsoServerResponse:
         ),
     ).encode(with_length=True)
     buffer: bytes = qqtea_encrypt(req_packet, key)
-    async with connect("configsvr.msf.3g.qq.com", 443, ssl=True) as conn:
-        query = (
-            b"POST /configsvr/serverlist.jsp HTTP/1.1\r\n"
-            b"Host: configsvr.msf.3g.qq.com\r\n"
-            b"User-Agent: QQ/8.4.1.2703 CFNetwork/1126\r\n"
-            b"Net-Type: Wifi\r\n"
-            b"Accept: */*\r\n"
-            b"Connection: close\r\n"
-            b"Content-Type: application/octet-stream\r\n"
-            b"Content-Length: " + str(len(buffer)).encode() + b"\r\n"
-            b"\r\n" + buffer
-        )
-        conn.write(query)
-        conn.write_eof()
-        resp_bytes = await conn.read_all()
-        response = http.client.HTTPResponse(
-            _FakeSocket(resp_bytes)  # type: ignore
-        )
-        response.begin()
 
-    if response.status != 200:
+    response = await HttpCat.request(
+        "POST",
+        "https://configsvr.msf.3g.qq.com/configsvr/serverlist.jsp",
+        {
+            "Content-Type": "application/octet-stream",
+            "User-Agent": "QQ/8.4.1.2703 CFNetwork/1126",
+            "Net-Type": "Wifi",
+            "Accept": "*/*"
+        },
+        buffer
+    )
+
+    if response.code != 200:
         raise SsoServerException(
-            f"Get sso server list failed with response code {response.status}"
+            f"Get sso server list failed with response code {response.code}"
         )
-    data: bytes = qqtea_decrypt(response.read(), key)
+    data: bytes = qqtea_decrypt(response.body, key)
     resp_packet = RequestPacketVersion3.decode(data[4:])
     server_info = SsoServerResponse.decode(
         resp_packet.data["HttpServerListRes"][1:-1]  # type: ignore
