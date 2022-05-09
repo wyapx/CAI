@@ -1,3 +1,4 @@
+import json
 import asyncio
 from dataclasses import dataclass
 from typing import Dict, Tuple
@@ -10,6 +11,14 @@ class HttpResponse:
     status: str
     header: Dict[str, str]
     body: bytes
+
+    def json(self, verify_type=True) -> dict:
+        if self.header.get("Content-Type") != "application/json" and verify_type:
+            raise TypeError(self.header.get("Content-Type"))
+        return json.loads(self.body)
+
+    def text(self, encoding="utf-8", errors="strict") -> str:
+        return self.body.decode(encoding, errors)
 
 
 class HttpCat:
