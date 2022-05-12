@@ -14,13 +14,12 @@ import struct
 import secrets
 import ipaddress
 from hashlib import md5
-from typing import TYPE_CHECKING, Tuple
-
-from rtea import qqtea_decrypt
+from typing import TYPE_CHECKING
 
 from cai.utils.binary import Packet
 from cai.settings.protocol import ApkInfo
 from cai.settings.device import DeviceInfo
+from cai.utils.tea import qqtea_decrypt
 from cai.utils.crypto import ECDH, EncryptSession
 from cai.client.packet import (
     UniPacket,

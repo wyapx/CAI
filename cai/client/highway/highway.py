@@ -4,9 +4,8 @@ import logging
 from hashlib import md5
 from typing import TYPE_CHECKING, List, Tuple, BinaryIO, Optional
 
-from rtea import qqtea_encrypt
-
 from cai.utils.image import decoder
+from cai.utils.tea import qqtea_encrypt
 from cai.pb.highway.protocol.highway_head_pb2 import highway_head
 
 from .encoders import encode_upload_img_req, encode_upload_voice_req, encode_video_upload_req

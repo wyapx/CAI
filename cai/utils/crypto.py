@@ -12,7 +12,7 @@ import struct
 from hashlib import md5
 from typing import Union
 
-from rtea import qqtea_encrypt
+from cai.utils.tea import qqtea_encrypt
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 

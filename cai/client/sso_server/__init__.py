@@ -12,7 +12,6 @@ from io import BytesIO
 from typing import List, Tuple, Union, Iterable, Optional, Container
 
 from jce import types
-from rtea import qqtea_decrypt, qqtea_encrypt
 
 from cai.settings.device import new_device
 from cai.exceptions import SsoServerException
@@ -20,6 +19,7 @@ from cai.settings.protocol import get_apk_info
 from cai.utils.httpcat import HttpCat
 from cai.utils.jce import RequestPacketVersion3
 from cai.connection.utils import tcp_latency_test
+from cai.utils.tea import qqtea_decrypt, qqtea_encrypt
 
 from .jce import SsoServer, SsoServerRequest, SsoServerResponse
 

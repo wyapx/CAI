@@ -13,10 +13,9 @@ import struct
 from dataclasses import dataclass
 from typing import Union, Optional
 
-from rtea import qqtea_decrypt, qqtea_encrypt
-
 from cai.utils.crypto import ECDH
 from cai.utils.binary import Packet
+from cai.utils.tea import qqtea_decrypt, qqtea_encrypt
 
 
 class CSsoBodyPacket(Packet):

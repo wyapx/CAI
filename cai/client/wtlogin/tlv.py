@@ -14,10 +14,9 @@ import struct
 from hashlib import md5
 from typing import Any, Dict, List, Union, Optional
 
-from rtea import qqtea_decrypt, qqtea_encrypt
-
 from cai.utils.binary import Packet
 from cai.pb.wtlogin import DeviceReport
+from cai.utils.tea import qqtea_decrypt, qqtea_encrypt
 
 
 class TlvEncoder:
