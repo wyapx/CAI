@@ -1,7 +1,9 @@
+import gzip
+import zlib
 import json
 import asyncio
 from dataclasses import dataclass
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
 from urllib import parse
 
 
@@ -11,14 +13,27 @@ class HttpResponse:
     status: str
     header: Dict[str, str]
     body: bytes
+    cookies: Dict[str, str]
 
-    def json(self, verify_type=True) -> dict:
-        if self.header.get("Content-Type", "").find("application/json") == 0 and verify_type:
+    @property
+    def decompressed_body(self) -> bytes:
+        if "Content-Encoding" in self.header:
+            if self.header["Content-Encoding"] == "gzip":
+                return gzip.decompress(self.body)
+            elif self.header["Content-Encoding"] == "deflate":
+                return zlib.decompress(self.body)
+            else:
+                raise TypeError("Unsuppoted compress type:", self.header["Content-Encoding"])
+        else:
+            return self.body
+
+    def json(self, verify_type=True) -> Union[dict, list]:
+        if self.header.get("Content-Type", "").find("application/json") == -1 and verify_type:
             raise TypeError(self.header["Content-Type"])
-        return json.loads(self.body)
+        return json.loads(self.decompressed_body)
 
     def text(self, encoding="utf-8", errors="strict") -> str:
-        return self.body.decode(encoding, errors)
+        return self.decompressed_body.decode(encoding, errors)
 
 
 class HttpCat:
@@ -67,11 +82,16 @@ class HttpCat:
             raise ConnectionResetError
         _, code, status = stat.split(" ", 2)
         header = {}
+        cookies = {}
         while True:
             head_block = await cls._read_line(reader)
             if head_block:
                 k, v = head_block.split(": ")  # type: str
-                header[k.title()] = v
+                if k.title() == "Set-Cookie":
+                    name, value = v[:v.find(";")].split("=", 1)
+                    cookies[name] = value
+                else:
+                    header[k.title()] = v
             else:
                 break
         return HttpResponse(
@@ -79,7 +99,8 @@ class HttpCat:
             status,
             header,
             await reader.read() if "Content-Length" not in header
-            else await reader.readexactly(int(header["Content-Length"]))
+            else await reader.readexactly(int(header["Content-Length"])),
+            cookies
         )
 
     @classmethod
@@ -90,6 +111,7 @@ class HttpCat:
         path: str,
         header: Dict[str, str] = None,
         body: bytes = None,
+        cookies: Dict[str, str] = None,
         ssl: bool = False
     ) -> HttpResponse:
         header = {
@@ -99,6 +121,9 @@ class HttpCat:
             "Content-Length": "0" if not body else str(len(body)),
             **(header if header else {})
         }
+        if cookies:
+            header["Cookie"] = "; ".join([f"{k}={v}" for k, v in cookies.items()])
+
         reader, writer = await asyncio.open_connection(*address, ssl=ssl)
         writer.write(cls._encode_header(
             method,
@@ -121,6 +146,7 @@ class HttpCat:
         url: str,
         header: Dict[str, str] = None,
         body: bytes = None,
+        cookies: Dict[str, str] = None,
         follow_redirect=True
     ) -> HttpResponse:
         address, path, ssl = cls._parse_url(url)
@@ -130,6 +156,7 @@ class HttpCat:
             path,
             header,
             body,
+            cookies,
             ssl
         )
         if resp.code // 100 == 3 and follow_redirect:
@@ -138,6 +165,7 @@ class HttpCat:
                 resp.header["Location"],
                 header,
                 body,
+                cookies
             )
         else:
             return resp
