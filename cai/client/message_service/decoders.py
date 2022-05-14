@@ -22,7 +22,10 @@ from cai.pb.im.msg.service.comm_elem import (
     MsgElemInfo_servtype3,
     MsgElemInfo_servtype33,
 )
-
+from cai.client.events.group import (
+    JoinGroupRequestEvent,
+    GroupMemberJoinedEvent
+)
 from .models import (
     Element,
     AtElement,
@@ -35,12 +38,13 @@ from .models import (
     ReplyElement,
     ShakeElement,
     VoiceElement,
+    VideoElement,
     PrivateMessage,
     RichMsgElement,
     CustomDataElement,
     FlashImageElement,
     SmallEmojiElement,
-    GroupFileElement, VideoElement,
+    GroupFileElement,
 )
 
 
@@ -441,11 +445,33 @@ class TempSessionDecoder:
         ...
 
 
+class TroopSystemMessageDecoder:
+    @classmethod
+    def decode(cls, message: Msg) -> Optional[Event]:
+        head = message.head
+        if head.type in (84, 525):
+            return JoinGroupRequestEvent(
+                head.from_uin,
+                head.auth_uin,
+                head.auth_nick,
+                head.type == 525,
+                head.seq,
+                head.time,
+                head.uid
+            )
+        elif head.type == 33:
+            return GroupMemberJoinedEvent(
+                head.from_uin,
+                head.auth_uin,
+                head.auth_nick
+            )
+
+
 MESSAGE_DECODERS: Dict[int, Callable[[Msg], Optional[Event]]] = {
     9: BuddyMessageDecoder.decode,
     10: BuddyMessageDecoder.decode,
     31: BuddyMessageDecoder.decode,
-    # 33: TroopAddMemberBroadcastDecoder,
+    33: TroopSystemMessageDecoder.decode,
     # 35: TroopSystemMessageDecoder,
     # 36: TroopSystemMessageDecoder,
     # 37: TroopSystemMessageDecoder,
@@ -454,7 +480,7 @@ MESSAGE_DECODERS: Dict[int, Callable[[Msg], Optional[Event]]] = {
     # 45: TroopSystemMessageDecoder,
     # 46: TroopSystemMessageDecoder,
     82: TroopMessageDecoder.decode,
-    # 84: TroopSystemMessageDecoder,
+    84: TroopSystemMessageDecoder.decode,
     # 85: TroopSystemMessageDecoder,
     # 86: TroopSystemMessageDecoder,
     # 87: TroopSystemMessageDecoder,
@@ -476,6 +502,7 @@ MESSAGE_DECODERS: Dict[int, Callable[[Msg], Optional[Event]]] = {
     # 208: PTTDecoder,
     # 519: MultiVideoDecoder,
     # 524: DiscussionUpdateDecoder,
+    525: TroopSystemMessageDecoder.decode,
     # 528: MsgType0x210Decoder,
     # 529: MsgType0x211Decoder,
     # 562: VideoQCallDecoder,

@@ -137,3 +137,19 @@ class GroupMemberMutedEvent(GroupEvent):
 class GroupMemberUnMutedEvent(GroupEvent):
     operator_id: int
     target_id: int
+
+
+@dataclass
+class JoinGroupRequestEvent(GroupEvent):
+    from_uin: int
+    nickname: str
+    is_invited: bool
+    seq: int
+    time: int
+    uid: int
+
+
+@dataclass
+class GroupMemberJoinedEvent(GroupEvent):
+    uin: int
+    nickname: str
