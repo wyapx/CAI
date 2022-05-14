@@ -1,3 +1,4 @@
+import struct
 import zlib
 from typing import Union, Sequence
 
@@ -76,9 +77,10 @@ def build_msg(elements: Sequence[models.Element]) -> MsgBody:
                 Elem(
                     text=PlainText(
                         str=e.display.encode(),
-                        attr_6_buf=b"\x00\x01\x00\x00\x00\x03\x00"
-                        + e.target.to_bytes(4, "big", signed=False)
-                        + b"\x00\x00",
+                        attr_6_buf=struct.pack("!xb3xbbI2x", 1, 3, 0, e.target)
+                        # attr_6_buf=b"\x00\x01\x00\x00\x00\x03\x00"
+                        # + e.target.to_bytes(4, "big", signed=False)
+                        # + b"\x00\x00",
                     )
                 )
             )
@@ -172,7 +174,14 @@ def build_msg(elements: Sequence[models.Element]) -> MsgBody:
                     )
                 )
             )
-            # need fallback
+            ret.append(
+                Elem(
+                    text=PlainText(
+                        str=f"@{e.sender}".encode(),
+                        attr_6_buf=struct.pack("!xb3xbbI2x", 1, 3, 0, e.sender)
+                    )
+                )
+            )
         elif isinstance(e, models.CustomDataElement):
             ret.append(
                 Elem(

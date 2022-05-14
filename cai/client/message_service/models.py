@@ -75,7 +75,7 @@ class ReplyElement(Element):
     time: int
     sender: int
     message: List[Element]
-    troop_name: Optional[str]
+    troop_name: Optional[str] = None
 
     @property
     def type(self) -> str:
