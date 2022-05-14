@@ -13,8 +13,8 @@ class HttpResponse:
     body: bytes
 
     def json(self, verify_type=True) -> dict:
-        if self.header.get("Content-Type") != "application/json" and verify_type:
-            raise TypeError(self.header.get("Content-Type"))
+        if self.header.get("Content-Type", "").find("application/json") == 0 and verify_type:
+            raise TypeError(self.header["Content-Type"])
         return json.loads(self.body)
 
     def text(self, encoding="utf-8", errors="strict") -> str:
@@ -31,7 +31,7 @@ class HttpCat:
         protocol="HTTP/1.1"
     ) -> bytearray:
         ret = bytearray()
-        ret += f"{method.upper()} {parse.quote(path)} {protocol}\r\n".encode()
+        ret += f"{method.upper()} {path} {protocol}\r\n".encode()
         for k, v in header.items():
             ret += f"{k}: {v}\r\n".encode()
         ret += b"\r\n"
@@ -56,7 +56,7 @@ class HttpCat:
                 port = 80
         return (
             (host, int(port)),
-            parse.quote(purl.path + ("?" + purl.query if purl.query else "")),
+            parse.quote(purl.path) + ("?" + purl.query if purl.query else ""),
             purl.scheme == "https"
         )
 
