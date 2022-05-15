@@ -16,11 +16,11 @@ from .decoders import decode_upload_ptt_resp, decode_upload_image_resp, decode_v
 from ...pb.highway.ptt_center import PttShortVideoUploadResp
 
 if TYPE_CHECKING:
-    from cai.client.client import Client
+    from cai.client.session import Session
 
 
 def _create_highway_header(
-    cmd: bytes, flag: int, cmd_id: int, client: "Client", locale=2052
+    cmd: bytes, flag: int, cmd_id: int, client: "Session", locale=2052
 ) -> highway_head.DataHighwayHead:
     return highway_head.DataHighwayHead(
         version=1,
@@ -35,7 +35,7 @@ def _create_highway_header(
 
 
 class HighWaySession:
-    def __init__(self, client: "Client", logger: logging.Logger = None):
+    def __init__(self, client: "Session", logger: logging.Logger = None):
         if not logger:
             logger = logging.getLogger(__name__)
         self.logger = logger

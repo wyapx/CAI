@@ -173,11 +173,11 @@ class SsoServerPushList(JceStruct):
     """
 
     socket_v4_mobile: types.LIST[SsoServer] = JceField(jce_id=1)
-    """:obj:`~jce.types.LIST` of :obj:`~cai.client.sso_server.jce.SsoServer`:
+    """:obj:`~jce.types.LIST` of :obj:`~cai.session.sso_server.jce.SsoServer`:
     socket ipv4 mobile server, renamed from a.
     """
     socket_v4_wifi: types.LIST[SsoServer] = JceField(jce_id=3)
-    """:obj:`~jce.types.LIST` of :obj:`~cai.client.sso_server.jce.SsoServer`:
+    """:obj:`~jce.types.LIST` of :obj:`~cai.session.sso_server.jce.SsoServer`:
     socket ipv4 wifi server, renamed from b.
     """
     # c: types.INT32 = JceField(jce_id=4)
@@ -185,33 +185,33 @@ class SsoServerPushList(JceStruct):
     # e: types.BYTE = JceField(jce_id=6)
     # f: types.INT32 = JceField(jce_id=7)
     http_v4_mobile: types.LIST[SsoServer] = JceField(jce_id=8)
-    """:obj:`~jce.types.LIST` of :obj:`~cai.client.sso_server.jce.SsoServer`:
+    """:obj:`~jce.types.LIST` of :obj:`~cai.session.sso_server.jce.SsoServer`:
     http ipv4 mobile server, renamed from g.
     """
     http_v4_wifi: types.LIST[SsoServer] = JceField(jce_id=9)
-    """:obj:`~jce.types.LIST` of :obj:`~cai.client.sso_server.jce.SsoServer`:
+    """:obj:`~jce.types.LIST` of :obj:`~cai.session.sso_server.jce.SsoServer`:
     http ipv4 wifi server, renamed from h.
     """
     udp_v4: types.LIST[SsoServer] = JceField(jce_id=10)
-    """:obj:`~jce.types.LIST` of :obj:`~cai.client.sso_server.jce.SsoServer`:
+    """:obj:`~jce.types.LIST` of :obj:`~cai.session.sso_server.jce.SsoServer`:
     quic ipv4 server, renamed from i.
     """
     socket_v6: types.LIST[SsoServer] = JceField(jce_id=11)
-    """:obj:`~jce.types.LIST` of :obj:`~cai.client.sso_server.jce.SsoServer`:
+    """:obj:`~jce.types.LIST` of :obj:`~cai.session.sso_server.jce.SsoServer`:
     socket ipv6 server, renamed from j.
 
     used when (wifi and :attr:`~.SsoServerPushList.nettype` & 1 == 1)
     or (mobile and :attr:`~.SsoServerPushList.nettype` & 2 == 2)
     """
     http_v6: types.LIST[SsoServer] = JceField(jce_id=12)
-    """:obj:`~jce.types.LIST` of :obj:`~cai.client.sso_server.jce.SsoServer`:
+    """:obj:`~jce.types.LIST` of :obj:`~cai.session.sso_server.jce.SsoServer`:
     http ipv6 server, renamed from k.
 
     used when (wifi and :attr:`~.SsoServerPushList.nettype` & 1 == 1)
     or (mobile and :attr:`~.SsoServerPushList.nettype` & 2 == 2)
     """
     udp_v6: types.LIST[SsoServer] = JceField(jce_id=13)
-    """:obj:`~jce.types.LIST` of :obj:`~cai.client.sso_server.jce.SsoServer`:
+    """:obj:`~jce.types.LIST` of :obj:`~cai.session.sso_server.jce.SsoServer`:
     quic ipv6 server, renamed from l.
 
     used when (wifi and :attr:`~.SsoServerPushList.nettype` & 1 == 1)

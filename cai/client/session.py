@@ -1,6 +1,6 @@
-"""Application Client Class.
+"""Application Session Class.
 
-This module is used to control client actions (low-level api).
+This module is used to control session actions (low-level api).
 
 :Copyright: Copyright (C) 2021-2021  cscs181
 :License: AGPL-3.0 or later. See `LICENSE`_ for detail.
@@ -112,8 +112,8 @@ from .wtlogin import (
     encode_login_request2_captcha,
 )
 
-HT = Callable[["Client", IncomingPacket], Awaitable[Command]]
-LT = Callable[["Client", Event], Awaitable[None]]
+HT = Callable[["Session", IncomingPacket], Awaitable[Command]]
+LT = Callable[["Session", Event], Awaitable[None]]
 
 HANDLERS: Dict[str, HT] = {
     "wtlogin.login": handle_oicq_response,
@@ -139,7 +139,7 @@ HANDLERS: Dict[str, HT] = {
 }
 
 
-class Client:
+class Session:
     LISTENERS: Set[LT] = set()
 
     def __init__(
@@ -151,7 +151,7 @@ class Client:
         *,
         auto_reconnect: bool = True
     ):
-        # client info
+        # session info
         self._device: DeviceInfo = device
         self._apk_info: ApkInfo = apk_info
 
@@ -205,13 +205,13 @@ class Client:
         self._closed: asyncio.Event = asyncio.Event()
 
     def __str__(self) -> str:
-        return f"<cai client object {self.uin}(connected={self.connected})>"
+        return f"<cai session object {self.uin}(connected={self.connected})>"
 
     @property
     def device(self) -> DeviceInfo:
         """
         Returns:
-            DeviceInfo: client device info
+            DeviceInfo: session device info
         """
         return self._device
 
@@ -219,7 +219,7 @@ class Client:
     def apk_info(self) -> ApkInfo:
         """
         Returns:
-            ApkInfo: client apk(protocol) info
+            ApkInfo: session apk(protocol) info
         """
         return self._apk_info
 
@@ -227,7 +227,7 @@ class Client:
     def uin(self) -> int:
         """
         Returns:
-            int: qq number of the client account.
+            int: qq number of the session account.
         """
         return self._uin
 
@@ -236,7 +236,7 @@ class Client:
         """Only available after login.
 
         Returns:
-            Optional[str]: nick name of the client account.
+            Optional[str]: nick name of the session account.
         """
         return self._nick
 
@@ -245,7 +245,7 @@ class Client:
         """Only available after login.
 
         Returns:
-            Optional[int]: age of the client account.
+            Optional[int]: age of the session account.
         """
         return self._age
 
@@ -254,17 +254,17 @@ class Client:
         """Only available after login.
 
         Returns:
-            Optional[int]: gender of the client account.
+            Optional[int]: gender of the session account.
         """
         return self._gender
 
     @property
     def status(self) -> Optional[OnlineStatus]:
         """See detail statuses in
-        :class:`~cai.client.status_service.OnlineStatus` Enum class.
+        :class:`~cai.session.status_service.OnlineStatus` Enum class.
 
         Returns:
-            Optional[OnlineStatus]: Online status of the client account.
+            Optional[OnlineStatus]: Online status of the session account.
         """
         return self._status
 
@@ -272,7 +272,7 @@ class Client:
     def connection(self) -> Connection:
         """
         Returns:
-            Connection: connection object for the client.
+            Connection: connection object for the session.
 
         Raises:
             ConnectionError: no connection available.
@@ -287,7 +287,7 @@ class Client:
     def connected(self) -> bool:
         """
         Returns:
-            bool: True if the client has connected to the server.
+            bool: True if the session has connected to the server.
         """
         return bool(self._connection and not self._connection.closed)
 
@@ -313,7 +313,7 @@ class Client:
         if self.connected:
             raise RuntimeError("Already connected to the server")
         if self.closed:
-            raise RuntimeError("Client is closed")
+            raise RuntimeError("Session is closed")
         log.network.debug("Getting Sso server")
         _server = server or await get_sso_server()
         log.logger.info(f"Connecting to server: {_server.host}:{_server.port}")
@@ -387,6 +387,7 @@ class Client:
     async def reconnect_and_login(
         self, change_server: bool = False, server: Optional[SsoServer] = None
     ) -> None:
+        # Todo: retry after reconnect fail
         await self.reconnect(change_server=change_server, server=server)
         # FIXME: register reason msfByNetChange?
         try:
@@ -401,8 +402,8 @@ class Client:
             ))
 
     async def close(self) -> None:
-        """Close the client and logout."""
-        log.logger.warning("closing client")
+        """Close the session and logout."""
+        log.logger.warning("closing session")
         # disable reconnection
         self._reconnect = False
         # logout
@@ -554,10 +555,10 @@ class Client:
             asyncio.create_task(self._run_listener(listener, event))
 
     def add_event_listener(self, listener: LT) -> None:
-        """Add event listener for this client.
+        """Add event listener for this session.
 
         Args:
-            listener (Callable[[Client, Event], Awaitable[None]]): Event listener.
+            listener (Callable[[Session, Event], Awaitable[None]]): Event listener.
         """
         self._listeners.add(listener)
 
@@ -661,14 +662,14 @@ class Client:
 
     async def _init(self, drop_offline_msg: bool = True) -> None:
         if not self.connected:
-            raise RuntimeError("Client not connected.")
+            raise RuntimeError("Session not connected.")
 
         self._init_flag = drop_offline_msg
 
         previous_status = self._status or OnlineStatus.Online
         if previous_status in (OnlineStatus.Offline, OnlineStatus.Unknown):
             previous_status = OnlineStatus.Online
-        # register client online status
+        # register session online status
         await self.register(status=previous_status)
         # force refresh group list
         await self._refresh_group_list()
@@ -679,7 +680,7 @@ class Client:
         self._init_flag = False
 
     async def login(self) -> LoginSuccess:
-        """Login the account of the client.
+        """Login the account of the session.
 
         This should be called before using any other apis.
 
@@ -948,15 +949,15 @@ class Client:
         status: OnlineStatus = OnlineStatus.Online,
         register_reason: RegPushReason = RegPushReason.AppRegister,
     ) -> RegisterSuccess:
-        """Register app client and get login status.
+        """Register app session and get login status.
 
-        This should be called after :meth:`.Client.login` successed.
+        This should be called after :meth:`.Session.login` successed.
 
         Args:
-            status (OnlineStatus, optional): Client status. Defaults to
-                :attr:`~cai.client.status_service.OnlineStatus.Online`.
+            status (OnlineStatus, optional): Session status. Defaults to
+                :attr:`~cai.session.status_service.OnlineStatus.Online`.
             register_reason (RegPushReason, optional): Register reason. Defaults to
-                :attr:`~cai.client.status_service.RegPushReason.AppRegister`.
+                :attr:`~cai.session.status_service.RegPushReason.AppRegister`.
 
         Returns:
             RegisterSuccess: Register success response.
@@ -1002,13 +1003,13 @@ class Client:
         battery_status: Optional[int] = None,
         is_power_connected: bool = False,
     ) -> RegisterSuccess:
-        """Register app client and get login status.
+        """Register app session and get login status.
 
-        This should be called after :meth:`.Client.login` successed.
+        This should be called after :meth:`.Session.login` successed.
 
         Args:
-            status (OnlineStatus, optional): Client status. Defaults to
-                :attr:`~cai.client.status_service.OnlineStatus.Online`.
+            status (OnlineStatus, optional): Session status. Defaults to
+                :attr:`~cai.session.status_service.OnlineStatus.Online`.
             battery_status (Optional[int], optional): Battery capacity.
                 Only works when status is :obj:`.OnlineStatus.Battery`. Defaults to None.
             is_power_connected (bool, optional): Is power connected to phone.
@@ -1061,7 +1062,7 @@ class Client:
             Create a heartbeat task using ``asyncio``.
 
             >>> import asyncio
-            >>> asyncio.create_task(client.heartbeat())
+            >>> asyncio.create_task(session.heartbeat())
         """
         if self._heartbeat_enabled:
             return

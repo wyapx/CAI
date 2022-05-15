@@ -1,4 +1,4 @@
-"""Client Base Command.
+"""Session Base Command.
 
 This module is used to build command from packet.
 

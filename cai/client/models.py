@@ -1,4 +1,4 @@
-"""Application Client Info Releated Models.
+"""Application Session Info Releated Models.
 
 This module is used to define account info data models.
 
@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Dict, List
 from cai.utils.dataclass import JsonableDataclass
 
 if TYPE_CHECKING:
-    from cai.client import Client
+    from cai.client import Session
 
 
 @dataclass
@@ -92,7 +92,7 @@ class Friend(JsonableDataclass):
     sex: int
     battery_status: int
 
-    _client: "Client" = field(repr=False, compare=False)
+    _client: "Session" = field(repr=False, compare=False)
 
     def __eq__(self, o: object) -> bool:
         if isinstance(o, Friend):
@@ -126,7 +126,7 @@ class FriendGroup(JsonableDataclass):
     friend_count: int
     online_friend_count: int
 
-    _client: "Client" = field(repr=False, compare=False)
+    _client: "Session" = field(repr=False, compare=False)
 
     def __eq__(self, o: object) -> bool:
         if isinstance(o, FriendGroup):
@@ -163,7 +163,7 @@ class Group(JsonableDataclass):
     cmd_uin_join_time: int
     max_group_member_num: int
 
-    _client: "Client" = field(repr=False, compare=False)
+    _client: "Session" = field(repr=False, compare=False)
     _cached_member_list: List["GroupMember"] = field(
         default_factory=list, repr=False, compare=False
     )
@@ -252,7 +252,7 @@ class GroupMember(JsonableDataclass):
     special_title_expire_time: int
     shutup_timestamp: int
 
-    _client: "Client" = field(repr=False, compare=False)
+    _client: "Session" = field(repr=False, compare=False)
     _group: Group = field(repr=False)
 
     def __eq__(self, o: object) -> bool:

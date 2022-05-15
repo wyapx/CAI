@@ -11,7 +11,7 @@ from cai.pb.highway.multi_msg.multi_msg_pb2 import (
 )
 
 if TYPE_CHECKING:
-    from cai.client.client import Client
+    from cai.client.session import Session
     from cai.client.packet import IncomingPacket
 
 
@@ -39,7 +39,7 @@ class MultiApplyResp(Command):
 
 
 async def build_multi_apply_up_pkg(
-    client: "Client",
+    client: "Session",
     group_id: int,
     data_len: int,
     data_md5: bytes,
@@ -68,7 +68,7 @@ async def build_multi_apply_up_pkg(
 
 
 async def _handle_multi_resp_body(
-    client: "Client", pkg: "IncomingPacket"
+    client: "Session", pkg: "IncomingPacket"
 ) -> MultiApplyResp:
     mrb = MultiRspBody.FromString(pkg.data).multimsgApplyupRsp
     if not mrb:

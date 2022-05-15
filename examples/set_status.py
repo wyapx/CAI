@@ -1,4 +1,4 @@
-"""Example Code for Set Client Status.
+"""Example Code for Set Session Status.
 
 :Copyright: Copyright (C) 2021-2021  cscs181
 :License: AGPL-3.0 or later. See `LICENSE`_ for detail.
@@ -31,7 +31,7 @@ async def run():
 
     await asyncio.sleep(10)
     await cai.set_status(OnlineStatus.Qme)
-    print("Current client status: ", client.status)
+    print("Current session status: ", client.status)
 
 
 if __name__ == "__main__":

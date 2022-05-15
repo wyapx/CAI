@@ -33,10 +33,10 @@ from cai.exceptions import (
 async def run(ci: Client):
     try:
         await ci.login()
-        print(f"Login Success! Client status: {ci.client.status!r}")
+        print(f"Login Success! Session status: {ci.session.status!r}")
     except Exception as e:
         await handle_failure(ci, e)
-    ci.client.add_event_listener(functools.partial(listen_message, ci))
+    ci.session.add_event_listener(functools.partial(listen_message, ci))
 
 
 async def listen_message(client: Client, _, event: Event):
@@ -163,7 +163,7 @@ if __name__ == "__main__":
 
     async def wait_cleanup():
         await close.wait()
-        await ci.client.close()
+        await ci.session.close()
 
     loop = asyncio.get_event_loop()
     loop.add_signal_handler(signal.SIGINT, close.set)

@@ -13,28 +13,28 @@ from .base import BaseAPI
 
 class Login(BaseAPI):
     async def login(self):
-        """Create a new client (or use an existing one) and login.
+        """Create a new session (or use an existing one) and login.
 
-        This function wraps the :meth:`~cai.client.client.Client.login` method of the client.
+        This function wraps the :meth:`~cai.session.session.Session.login` method of the session.
 
         Raises:
             LoginSliderException: Need slider ticket.
             LoginCaptchaException: Need captcha image.
         """
-        await self.client.connect()
+        await self.session.connect()
         try:
             await self._executor("login")
         except LoginException:
             raise  # user handle required
         except Exception:
-            await self.client.close()
+            await self.session.close()
             raise
 
     async def submit_captcha(self, captcha: str, captcha_sign: bytes) -> bool:
         """Submit captcha data to login.
 
-        This function wraps the :meth:`~cai.client.client.Client.submit_captcha`
-        method of the client.
+        This function wraps the :meth:`~cai.session.session.Session.submit_captcha`
+        method of the session.
 
         Args:
             captcha (str): Captcha data to submit.
@@ -47,15 +47,15 @@ class Login(BaseAPI):
         try:
             await self._executor("submit_captcha", captcha, captcha_sign)
         except LoginException:
-            await self.client.close()
+            await self.session.close()
             raise
         return True
 
     async def submit_slider_ticket(self, ticket: str) -> bool:
         """Submit slider ticket to login.
 
-        This function wraps the :meth:`~cai.client.client.Client.submit_slider_ticket`
-        method of the client.
+        This function wraps the :meth:`~cai.session.session.Session.submit_slider_ticket`
+        method of the session.
 
         Args:
             ticket (str): Slider ticket to submit.
@@ -70,27 +70,27 @@ class Login(BaseAPI):
     async def request_sms(self) -> bool:
         """Request sms code message to login.
 
-        This function wraps the :meth:`~cai.client.client.Client.request_sms`
-        method of the client.
+        This function wraps the :meth:`~cai.session.session.Session.request_sms`
+        method of the session.
 
         Args:
-            uin (Optional[int], optional): Account of the client want to login.
+            uin (Optional[int], optional): Account of the session want to login.
                 Defaults to None.
 
         Raises:
             LoginSMSRequestError: Too many SMS messages were sent.
         """
         try:
-            return await self.client.request_sms()
+            return await self.session.request_sms()
         except LoginException:
-            await self.client.close()
+            await self.session.close()
             raise
 
     async def submit_sms(self, sms_code: str) -> bool:
         """Submit sms code to login.
 
-        This function wraps the :meth:`~cai.client.client.Client.submit_sms`
-        method of the client.
+        This function wraps the :meth:`~cai.session.session.Session.submit_sms`
+        method of the session.
 
         Args:
             sms_code (str): SMS code to submit.
@@ -102,7 +102,7 @@ class Login(BaseAPI):
         try:
             await self._executor("submit_sms", sms_code)
         except LoginException:
-            await self.client.close()
+            await self.session.close()
             raise
         return True
 

@@ -33,7 +33,7 @@ from .command import (
 )
 
 if TYPE_CHECKING:
-    from cai.client import Client
+    from cai.client import Session
 
 
 class SyncFlag(IntEnum):
@@ -102,7 +102,7 @@ def encode_get_message(
 
 
 async def handle_get_message(
-    client: "Client", packet: IncomingPacket
+    client: "Session", packet: IncomingPacket
 ) -> "GetMessageCommand":
     """Handle Pb Get Message response.
 
@@ -250,7 +250,7 @@ def encode_delete_message(
 
 
 async def handle_push_notify(
-    client: "Client", packet: IncomingPacket
+    client: "Session", packet: IncomingPacket
 ) -> PushNotifyCommand:
     """Handle Push Notify Command.
 
@@ -307,7 +307,7 @@ async def handle_push_notify(
 
 # MessageSvc.PushForceOffline
 async def handle_force_offline(
-    client: "Client", packet: IncomingPacket
+    client: "Session", packet: IncomingPacket
 ) -> PushForceOfflineCommand:
     client._status = OnlineStatus.Offline
     client._reconnect = False
@@ -320,7 +320,7 @@ async def handle_force_offline(
         packet.data,
     )
     log.network.error(
-        f"Client {client.uin} force offline: " + request.request.tips
+        f"Session {client.uin} force offline: " + request.request.tips
         if isinstance(request, PushForceOffline)
         else "Unknown reason."
     )

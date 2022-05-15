@@ -31,7 +31,7 @@ from .command import (
 )
 
 if TYPE_CHECKING:
-    from cai.client import Client
+    from cai.client import Session
 
 
 # OnlinePush.RespPush
@@ -92,7 +92,7 @@ def encode_push_response(
 
 
 async def handle_c2c_sync(
-    client: "Client", packet: IncomingPacket
+    client: "Session", packet: IncomingPacket
 ) -> PushMsgCommand:
     """Handle C2C Message Sync.
 
@@ -140,7 +140,7 @@ async def handle_c2c_sync(
 
 
 async def handle_push_msg(
-    client: "Client",
+    client: "Session",
     packet: IncomingPacket,
 ) -> PushMsgCommand:
     """Handle Push Message Command.
@@ -220,7 +220,7 @@ async def handle_push_msg(
 
 # OnlinePush.ReqPush
 async def handle_req_push(
-    client: "Client", packet: IncomingPacket
+    client: "Session", packet: IncomingPacket
 ) -> SvcReqPushCommand:
     """Handle Request Push Command.
 

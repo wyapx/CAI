@@ -39,7 +39,7 @@ from .command import (
 )
 
 if TYPE_CHECKING:
-    from cai.client import Client
+    from cai.client import Session
 
 
 class OnlineStatus(IntEnum):
@@ -201,7 +201,7 @@ def encode_register(
     Args:
         seq (int): Packet sequence.
         session_id (bytes): Session ID.
-        ksid (bytes): KSID of client.
+        ksid (bytes): KSID of session.
         uin (int): User QQ number.
         tgt (bytes): Siginfo tgt.
         d2 (bytes): Siginfo d2.
@@ -238,7 +238,7 @@ def encode_register(
     return packet
 
 
-# set status from client
+# set status from session
 def encode_set_status(
     seq: int,
     session_id: bytes,
@@ -296,7 +296,7 @@ def encode_set_status(
 
 
 async def handle_register_response(
-    client: "Client", packet: IncomingPacket
+    client: "Session", packet: IncomingPacket
 ) -> SvcRegisterResponse:
     response = SvcRegisterResponse.decode_response(
         packet.uin,
@@ -338,7 +338,7 @@ def encode_force_offline_response(
     Args:
         seq (int): Packet sequence.
         session_id (bytes): Session ID.
-        ksid (bytes): KSID of client.
+        ksid (bytes): KSID of session.
         uin (int): User QQ number.
         tgt (bytes): Siginfo tgt.
         d2 (bytes): Siginfo d2.
@@ -378,7 +378,7 @@ def encode_force_offline_response(
 
 
 async def handle_request_offline(
-    client: "Client", packet: IncomingPacket
+    client: "Session", packet: IncomingPacket
 ) -> MSFForceOfflineCommand:
     request = MSFForceOfflineCommand.decode_response(
         packet.uin,
@@ -388,7 +388,7 @@ async def handle_request_offline(
         packet.data,
     )
     logger.error(
-        f"Client {client.uin} force offline: " + request.request.info
+        f"Session {client.uin} force offline: " + request.request.info
         if isinstance(request, MSFForceOffline)
         else "Unknown reason."
     )

@@ -31,7 +31,7 @@ class _FakeSocket:
     """Fake socket object.
 
     This class is used to wrap raw response bytes
-    and pass them to :class:`http.client.HTTPResponse`.
+    and pass them to :class:`http.session.HTTPResponse`.
 
     Args:
         response (:obj:`bytes`): HTTP raw response from server.

@@ -42,7 +42,7 @@ from .oicq import (
 )
 
 if TYPE_CHECKING:
-    from cai.client import Client
+    from cai.client import Session
 
 
 # submit captcha
@@ -75,7 +75,7 @@ def encode_login_request2_captcha(
         seq (int): Packet sequence.
         key (bytes): 16 bits key used to decode the response.
         session_id (bytes): Session ID.
-        ksid (bytes): KSID of client.
+        ksid (bytes): KSID of session.
         uin (int): User QQ number.
         captcha (str): Captcha image result.
         sign (bytes): Signature of the captcha.
@@ -149,7 +149,7 @@ def encode_login_request2_slider(
         seq (int): Packet sequence.
         key (bytes): 16 bits key used to decode the response.
         session_id (bytes): Session ID.
-        ksid (bytes): KSID of client.
+        ksid (bytes): KSID of session.
         uin (int): User QQ number.
         ticket (str): Captcha image result.
         t104 (bytes): TLV 104 data.
@@ -224,12 +224,12 @@ def encode_login_request7(
         seq (int): Packet sequence.
         key (bytes): 16 bits key used to decode the response.
         session_id (bytes): Session ID.
-        ksid (bytes): KSID of client.
+        ksid (bytes): KSID of session.
         uin (int): User QQ number.
         sms_code (str): SMS code.
         t104 (bytes): TLV 104 data.
         t174 (bytes): TLV 174 data.
-        g (bytes): G data of client.
+        g (bytes): G data of session.
         apk_info (ApkInfo): ApkInfo
         imei (str): device imei
 
@@ -307,7 +307,7 @@ def encode_login_request8(
         seq (int): Packet sequence.
         key (bytes): 16 bits key used to decode the response.
         session_id (bytes): Session ID.
-        ksid (bytes): KSID of client.
+        ksid (bytes): KSID of session.
         uin (int): User QQ number.
         t104 (bytes): TLV 104 data.
         t174 (bytes): TLV 174 data.
@@ -387,7 +387,7 @@ def encode_login_request9(
         seq (int): Packet sequence.
         key (bytes): 16 bits key used to decode the response.
         session_id (bytes): Session ID.
-        ksid (bytes): KSID of client.
+        ksid (bytes): KSID of session.
         uin (int): User QQ number.
         password_md5 (bytes): User QQ password md5 hash.
         device (DeviceInfo): your device info
@@ -557,7 +557,7 @@ def encode_login_request20(
         seq (int): Packet sequence.
         key (bytes): 16 bits key used to decode the response.
         session_id (bytes): Session ID.
-        ksid (bytes): KSID of client.
+        ksid (bytes): KSID of session.
         uin (int): User QQ number.
         t104 (bytes): T104 response data.
         g (bytes): md5 of (guid + dpwd + t402).
@@ -636,7 +636,7 @@ def encode_exchange_emp_15(
     Args:
         seq (int): Packet sequence.
         session_id (bytes): Session ID.
-        ksid (bytes): KSID of client.
+        ksid (bytes): KSID of session.
         uin (int): User QQ number.
         g (bytes): Siginfo g.
         dpwd (bytes): Siginfo dpwd.
@@ -767,7 +767,7 @@ def encode_exchange_emp_15(
 
 
 async def handle_oicq_response(
-    client: "Client", packet: IncomingPacket
+    client: "Session", packet: IncomingPacket
 ) -> OICQResponse:
     response = OICQResponse.decode_response(
         packet.uin,

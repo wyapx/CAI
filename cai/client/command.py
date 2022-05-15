@@ -1,4 +1,4 @@
-"""Client Base Command.
+"""Session Base Command.
 
 This module is used to build command from packet.
 
@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from .packet import IncomingPacket
 
 if TYPE_CHECKING:
-    from .client import Client
+    from .session import Session
 
 
 @dataclass
@@ -31,7 +31,7 @@ class UnhandledCommand(Command):
 
 
 async def _packet_to_command(
-    client: "Client", packet: IncomingPacket
+    client: "Session", packet: IncomingPacket
 ) -> UnhandledCommand:
     return UnhandledCommand(
         packet.uin,

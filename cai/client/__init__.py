@@ -1,4 +1,4 @@
-"""Application Client.
+"""Application Session.
 
 This module is main entry point for the application.
 
@@ -13,7 +13,7 @@ from cai.client.events.base import Event
 
 from .command import Command
 from .packet import IncomingPacket
-from .client import HANDLERS, Client
+from .session import HANDLERS, Session
 from .status_service import OnlineStatus, RegPushReason
 from .message_service import GroupMessage, PrivateMessage
 from .models import Group, Friend, FriendGroup, GroupMember, GroupMemberRole

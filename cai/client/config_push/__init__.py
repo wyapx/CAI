@@ -28,7 +28,7 @@ from .command import (
 )
 
 if TYPE_CHECKING:
-    from cai.client import Client
+    from cai.client import Session
 
 
 def encode_config_push_response(
@@ -75,7 +75,7 @@ def encode_config_push_response(
 
 # ConfigPushSvc.PushReq
 async def handle_config_push_request(
-    client: "Client", packet: IncomingPacket
+    client: "Session", packet: IncomingPacket
 ) -> ConfigPushCommand:
     command = ConfigPushCommand.decode_push_req(
         packet.uin,

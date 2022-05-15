@@ -17,7 +17,7 @@ from cai.client.command import Command
 from cai.client.packet import CSsoBodyPacket, CSsoDataPacket, IncomingPacket
 
 if TYPE_CHECKING:
-    from cai.client import Client
+    from cai.client import Session
 
 
 def encode_heartbeat(
@@ -40,7 +40,7 @@ def encode_heartbeat(
     Args:
         seq (int): Packet sequence.
         session_id (bytes): Session ID.
-        ksid (bytes): KSID of client.
+        ksid (bytes): KSID of session.
         imei (str): Device imei.
         uin (int): User QQ number.
         sub_app_id (int): apkinfo
@@ -65,7 +65,7 @@ class Heartbeat(Command):
 
 
 async def handle_heartbeat(
-    client: "Client", packet: IncomingPacket
+    client: "Session", packet: IncomingPacket
 ) -> Heartbeat:
     return Heartbeat(
         packet.uin, packet.seq, packet.ret_code, packet.command_name

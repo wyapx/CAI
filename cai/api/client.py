@@ -1,4 +1,4 @@
-"""Application Client APIs.
+"""Application Session APIs.
 
 :Copyright: Copyright (C) 2021-2021  cscs181
 :License: AGPL-3.0 or later. See `LICENSE`_ for detail.
@@ -13,7 +13,7 @@ from typing import Union, BinaryIO, Optional, Sequence, Tuple, Dict, NoReturn
 
 from cai import log
 from cai.client import OnlineStatus
-from cai.client import Client as client_t
+from cai.client import Session
 from cai.settings.device import get_device
 from cai.pb.msf.msg.svc import PbSendMsgResp
 from cai.client.highway import HighWaySession
@@ -37,7 +37,7 @@ from .error import (
 )
 
 
-def _make_client(uin: int, passwd: Union[str, bytes], protocol: Optional[str] = None) -> client_t:
+def _make_session(uin: int, passwd: Union[str, bytes], protocol: Optional[str] = None) -> Session:
     if not (isinstance(passwd, bytes) and len(passwd) == 16):
         # not a valid md5 passwd
         if isinstance(passwd, bytes):
@@ -49,7 +49,7 @@ def _make_client(uin: int, passwd: Union[str, bytes], protocol: Optional[str] = 
         apk_info = get_protocol(uin)
     else:
         apk_info = get_apk_info(protocol)
-    return client_t(uin, passwd, device, apk_info)
+    return Session(uin, passwd, device, apk_info)
 
 
 class Client(_Login, _Friend, _Group, _Events):
@@ -59,9 +59,9 @@ class Client(_Login, _Friend, _Group, _Events):
         passwd: Union[str, bytes],
         protocol: Optional[str] = None,
     ):
-        client = _make_client(uin, passwd, protocol=protocol)
-        self.client = client
-        self._highway_session = HighWaySession(client, logger=log.highway)
+        session = _make_session(uin, passwd, protocol=protocol)
+        self.session = session
+        self._highway_session = HighWaySession(session, logger=log.highway)
         self._msg_fut: Dict[int, asyncio.Future] = {}  # rand: seq
         self.add_event_listener(self._internal_handler)
 
@@ -72,11 +72,11 @@ class Client(_Login, _Friend, _Group, _Events):
 
     @property
     def connected(self) -> bool:
-        return self.client.connected
+        return self.session.connected
 
     @property
     def status(self) -> Optional[OnlineStatus]:
-        return self.client.status
+        return self.session.status
 
     async def send_group_msg(self, gid: int, msg: Sequence[Element]) -> Tuple[int, int, int]:
         """
@@ -88,12 +88,12 @@ class Client(_Login, _Friend, _Group, _Events):
             ]
         """
         # todo: split long msg
-        seq, rand, fut = self.client.next_seq(), random.randint(1000, 1000000), asyncio.Future()
+        seq, rand, fut = self.session.next_seq(), random.randint(1000, 1000000), asyncio.Future()
         self._msg_fut[rand] = fut
         try:
             resp: PbSendMsgResp = PbSendMsgResp.FromString(
                 (
-                    await self.client.send_unipkg_and_wait(
+                    await self.session.send_unipkg_and_wait(
                         "MessageSvc.PbSendMsg",
                         make_group_msg_pkg(
                             seq, gid, rand, build_msg(msg)
@@ -130,8 +130,8 @@ class Client(_Login, _Friend, _Group, _Events):
         return await self._highway_session.upload_video(file, thumb, group_id)
 
     async def close(self) -> NoReturn:
-        """Stop Client"""
-        await self.client.close()
+        """Stop Session"""
+        await self.session.close()
 
     async def set_status(
         self,
@@ -139,10 +139,10 @@ class Client(_Login, _Friend, _Group, _Events):
         battery_status: Optional[int] = None,
         is_power_connected: bool = False,
     ) -> NoReturn:
-        """Change client status.
+        """Change session status.
 
-        This function wraps the :meth:`~cai.client.client.Client.register`
-        method of the client.
+        This function wraps the :meth:`~cai.session.session.Session.register`
+        method of the session.
 
         Args:
             status (OnlineStatus): Status want to change.
@@ -152,12 +152,12 @@ class Client(_Login, _Friend, _Group, _Events):
                 Defaults to False.
 
         Raises:
-            RuntimeError: Client already exists and is running.
+            RuntimeError: Session already exists and is running.
             RuntimeError: Password not provided when login a new account.
             ApiResponseError: Invalid API request.
             RegisterException: Register Failed.
         """
-        await self.client.set_status(
+        await self.session.set_status(
             status,
             battery_status,
             is_power_connected,

@@ -25,8 +25,8 @@ class Group(BaseAPI):
     ) -> Optional[group_t]:
         """Get Group.
 
-        This function wraps the :meth:`~cai.client.client.Client.get_group`
-        method of the client.
+        This function wraps the :meth:`~cai.session.session.Session.get_group`
+        method of the session.
 
         Args:
             group_id (int): Group id.
@@ -46,8 +46,8 @@ class Group(BaseAPI):
     async def get_group_list(self, cache: bool = True) -> List[group_t]:
         """Get account group list.
 
-        This function wraps the :meth:`~cai.client.client.Client.get_group_list`
-        method of the client.
+        This function wraps the :meth:`~cai.session.session.Session.get_group_list`
+        method of the session.
 
         Args:
             cache (bool, optional): Use cached group list. Defaults to True.
@@ -67,8 +67,8 @@ class Group(BaseAPI):
     ) -> Optional[List[GroupMember]]:
         """Get account group member list.
 
-        This function wraps the :meth:`~cai.client.client.Client.get_group_member_list`
-        method of the client.
+        This function wraps the :meth:`~cai.session.session.Session.get_group_member_list`
+        method of the session.
 
         Args:
             group (Union[int, Group]): Group id or group object want to get members.
@@ -86,7 +86,7 @@ class Group(BaseAPI):
         return await self._executor("get_group_member_list", group, cache)
 
     async def set_group_admin(self, group: int, uin: int, is_admin: bool):
-        await self.client.send_unipkg_and_wait(
+        await self.session.send_unipkg_and_wait(
             "OidbSvc.0x55c_1",
             pkg_builder.build_set_admin_pkg(
                 target_uin=uin,
@@ -96,7 +96,7 @@ class Group(BaseAPI):
         )
 
     async def mute_member(self, group: int, uin: int, duration: int):
-        await self.client.send_unipkg_and_wait(
+        await self.session.send_unipkg_and_wait(
             "OidbSvc.0x570_8",
             pkg_builder.build_mute_member_pkg(
                 target_uin=uin,
@@ -106,7 +106,7 @@ class Group(BaseAPI):
         )
 
     async def send_group_nudge(self, group: int, uin: int):
-        await self.client.send_unipkg_and_wait(
+        await self.session.send_unipkg_and_wait(
             "OidbSvc.0xed3",
             pkg_builder.build_send_nudge_pkg(
                 target_uin=uin,
@@ -117,7 +117,7 @@ class Group(BaseAPI):
     async def recall_group_msg(self, group: int, msg: Tuple[int, int, int]):
         ret = PbMsgWithDrawResp.FromString(
             (
-                await self.client.send_unipkg_and_wait(
+                await self.session.send_unipkg_and_wait(
                     "PbMessageSvc.PbMsgWithDraw",
                     build_recall_group_msg_pkg(
                         group,

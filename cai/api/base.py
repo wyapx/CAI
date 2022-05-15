@@ -1,17 +1,17 @@
-from cai.client.client import Client as client_t
+from cai.client.session import Session
 
 
 class BaseAPI:
-    client: client_t
+    session: Session
 
     async def _executor(
         self, func_name: str, *args, uncaught_error=False, **kwargs
     ):
-        if not hasattr(self.client, func_name):
+        if not hasattr(self.session, func_name):
             raise AttributeError(f"client has no attribute '{func_name}'")
         try:
-            return await getattr(self.client, func_name)(*args, **kwargs)
+            return await getattr(self.session, func_name)(*args, **kwargs)
         except Exception:
             if uncaught_error:
-                await self.client.close()
+                await self.session.close()
             raise

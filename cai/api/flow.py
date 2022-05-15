@@ -10,7 +10,7 @@
 from typing import TYPE_CHECKING, Callable, Awaitable
 
 from cai.log import logger
-from cai.client import HANDLERS, Event, Client, Command, IncomingPacket
+from cai.client import HANDLERS, Event, Session, Command, IncomingPacket
 
 from .base import BaseAPI
 
@@ -25,14 +25,14 @@ class Events(BaseAPI):
         """Add event listener.
 
         Args:
-            listener (Callable[[Client, Event], Awaitable[None]]): Event listener.
+            listener (Callable[[Session, Event], Awaitable[None]]): Event listener.
         """
-        self.client.add_event_listener(lambda _, e: listener(self, e))  # type: ignore
+        self.session.add_event_listener(lambda _, e: listener(self, e))  # type: ignore
 
     def register_packet_handler(
         self,
         cmd: str,
-        packet_handler: Callable[[Client, IncomingPacket], Awaitable[Command]],
+        packet_handler: Callable[[Session, IncomingPacket], Awaitable[Command]],
     ) -> None:
         """Register custom packet handler.
 
@@ -42,8 +42,8 @@ class Events(BaseAPI):
 
         Args:
             cmd (str): Command name of the packet.
-            packet_handler (Callable[[Client, IncomingPacket], Awaitable[Command]]):
-                Asynchronous packet handler. A :obj:`~cai.client.command.Command`
+            packet_handler (Callable[[Session, IncomingPacket], Awaitable[Command]]):
+                Asynchronous packet handler. A :obj:`~cai.session.command.Command`
                 object should be returned.
         """
         if cmd in HANDLERS:

@@ -35,7 +35,7 @@ class ApiException(CaiException):
 
 
 class ClientNotAvailable(ApiException):
-    """Cannot get client"""
+    """Cannot get session"""
 
     def __init__(self, uin: Optional[int], reason: str):
         super().__init__(uin)

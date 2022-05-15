@@ -21,8 +21,8 @@ class Friend(BaseAPI):
     ) -> Optional[friend_t]:
         """Get account friend.
 
-        This function wraps the :meth:`~cai.client.client.Client.get_friend`
-        method of the client.
+        This function wraps the :meth:`~cai.session.session.Session.get_friend`
+        method of the session.
 
         Args:
             friend_uin (int): Friend account uin.
@@ -37,19 +37,19 @@ class Friend(BaseAPI):
             ApiResponseError: Get friend list failed.
             FriendListException: Get friend list returned non-zero ret code.
         """
-        return await self.client.get_friend(friend_uin, cache)
+        return await self.session.get_friend(friend_uin, cache)
 
     async def get_friend_list(self, cache: bool = True) -> List[friend_t]:
         """Get account friend list.
 
-        This function wraps the :meth:`~cai.client.client.Client.get_friend_list`
-        method of the client.
+        This function wraps the :meth:`~cai.session.session.Session.get_friend_list`
+        method of the session.
 
         Args:
             cache (bool, optional):  Use cached friend list. Defaults to True.
 
         Returns:
-            List of :obj:`~cai.client.models.Friend`
+            List of :obj:`~cai.session.models.Friend`
 
         Raises:
             RuntimeError: Error response type got. This should not happen.
@@ -63,8 +63,8 @@ class Friend(BaseAPI):
     ) -> Optional[FriendGroup]:
         """Get Friend Group.
 
-        This function wraps the :meth:`~cai.client.client.Client.get_friend_group`
-        method of the client.
+        This function wraps the :meth:`~cai.session.session.Session.get_friend_group`
+        method of the session.
 
         Args:
             group_id (int): Friend group id.
@@ -86,8 +86,8 @@ class Friend(BaseAPI):
     ) -> List[FriendGroup]:
         """Get account friend group list.
 
-        This function wraps the :meth:`~cai.client.client.Client.get_friend_group_list`
-        method of the client.
+        This function wraps the :meth:`~cai.session.session.Session.get_friend_group_list`
+        method of the session.
 
         Args:
             cache (bool, optional):  Use cached friend group list. Defaults to True.

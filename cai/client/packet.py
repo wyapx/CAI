@@ -1,4 +1,4 @@
-"""Client packets.
+"""Session packets.
 
 This module is used to packet data into outgoing format.
 

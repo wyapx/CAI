@@ -174,9 +174,9 @@ class SvcRespRegister(JceStruct):
     crash_flag: types.BYTE = JceField(bytes(1), jce_id=9)
     """:obj:`~jce.types.BYTE`: unknown."""
     client_ip: types.STRING = JceField("", jce_id=10)
-    """:obj:`~jce.types.STRING`: client IP."""
+    """:obj:`~jce.types.STRING`: session IP."""
     client_port: types.INT = JceField(0, jce_id=11)
-    """:obj:`~jce.types.INT`: client port."""
+    """:obj:`~jce.types.INT`: session port."""
     hello_interval: types.INT = JceField(300, jce_id=12)
     """:obj:`~jce.types.INT`: heartbeat interval time."""
     large_seq: types.INT64 = JceField(jce_id=13)
@@ -194,9 +194,9 @@ class SvcRespRegister(JceStruct):
     ext_online_status: types.INT64 = JceField(0, jce_id=17)
     """:obj:`~jce.types.INT64`: extra online status."""
     client_battery_get_interval: types.INT64 = JceField(86400, jce_id=18)
-    """:obj:`~jce.types.INT64`: client battery status get interval."""
+    """:obj:`~jce.types.INT64`: session battery status get interval."""
     client_auto_status_interval: types.INT64 = JceField(600, jce_id=19)
-    """:obj:`~jce.types.INT64`: client status get interval."""
+    """:obj:`~jce.types.INT64`: session status get interval."""
 
 
 class RequestMSFForceOffline(JceStruct):
