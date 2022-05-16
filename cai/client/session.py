@@ -17,7 +17,6 @@ from typing import (
     Set,
     Dict,
     List,
-    Tuple,
     Union,
     Callable,
     Optional,
@@ -56,7 +55,7 @@ from .multi_msg.long_msg import _handle_multi_resp_body
 from .heartbeat import Heartbeat, encode_heartbeat, handle_heartbeat
 from .models import Group, Friend, SigInfo, FriendGroup, GroupMember
 from .config_push import FileServerPushList, handle_config_push_request
-from .online_push import handle_c2c_sync, handle_push_msg, handle_req_push
+from .online_push import handle_c2c_sync, handle_push_msg, handle_req_push, handle_push_trans_msg
 from .message_service import (
     SyncFlag,
     GetMessageCommand,
@@ -136,6 +135,7 @@ HANDLERS: Dict[str, HT] = {
     # "OnlinePush.PbPushBindUinGroupMsg": handle_push_msg,  # sub account
     "MultiMsg.ApplyUp": _handle_multi_resp_body,
     "OnlinePush.ReqPush": handle_req_push,
+    "OnlinePush.PbPushTransMsg": handle_push_trans_msg
 }
 
 

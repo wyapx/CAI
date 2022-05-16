@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from .base import Event
 
@@ -153,3 +153,22 @@ class JoinGroupRequestEvent(GroupEvent):
 class GroupMemberJoinedEvent(GroupEvent):
     uin: int
     nickname: str
+
+
+@dataclass
+class GroupMemberLeaveEvent(GroupEvent):
+    uin: int
+    operator: Optional[int] = None
+    dismiss: bool = False
+
+
+@dataclass
+class GroupMemberPermissionChangeEvent(GroupEvent):
+    uin: int
+    is_admin: bool
+
+
+@dataclass
+class TransferGroupEvent(GroupEvent):
+    operator: int
+    uin: int

@@ -16,3 +16,4 @@ Generate all protobuf file using:
 """
 
 from .onlinepush_pb2 import *
+from .onlinepush_trans_pb2 import *

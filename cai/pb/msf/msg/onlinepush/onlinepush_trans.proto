@@ -1,0 +1,25 @@
+syntax = "proto2";
+
+// source: com/tencent/pb/onlinepush/OnlinePushTrans.proto
+
+
+message ExtGroupKeyInfo {
+  optional uint32 curMaxSeq = 1;
+  optional uint64 curTime = 2;
+}
+
+message PbMsgInfo {
+  optional uint64 fromUin = 1;
+  optional uint64 toUin = 2;
+  optional uint32 type = 3;
+  optional uint32 subtype = 4;
+  optional uint32 seq = 5;
+  optional uint64 uid = 6;
+  optional uint32 time = 7;
+  optional uint32 realMsgTime = 8;
+  optional string nickName = 9;
+  optional bytes data = 10;
+  optional uint32 svrIp = 11;
+  optional ExtGroupKeyInfo extGroupKeyInfo = 12;
+  optional uint32 generalFlag = 17;
+}

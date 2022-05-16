@@ -22,6 +22,7 @@ from cai.client.events.group import (
 )
 
 from .jce import MessageInfo
+from ...pb.msf.msg.onlinepush import PbMsgInfo
 
 DT = Callable[[MessageInfo], Iterator[Event]]
 
@@ -41,6 +42,10 @@ def parse_cmds(content: str) -> Tuple[str, List[Dict[str, Any]]]:
             texts.append(cmd_obj["text"])
     texts.append(content[text_begin:])
     return "".join(texts), cmds
+
+
+def decode_trans_msg(data: bytes):
+    return PbMsgInfo.FromString(data)
 
 
 class GroupEventDecoder:

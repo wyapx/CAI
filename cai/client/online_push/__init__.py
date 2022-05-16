@@ -8,19 +8,24 @@ This module is used to build and handle online push related packet.
 .. _LICENSE:
     https://github.com/cscs181/CAI/blob/master/LICENSE
 """
-from typing import TYPE_CHECKING, List, Optional, Sequence
+import struct
+from typing import TYPE_CHECKING, List, Optional
 
 from jce import types
 
 from cai.log import logger
-from cai.client import events
 from cai.utils.binary import Packet
 from cai.utils.jce import RequestPacketVersion3
 from cai.client.message_service import MESSAGE_DECODERS
 from cai.client.packet import UniPacket, IncomingPacket
-from cai.pb.im.oidb.cmd0x857.troop_tips import TemplParam
+from cai.client.events.group import (
+    GroupMemberLeaveEvent,
+    TransferGroupEvent,
+    GroupMemberPermissionChangeEvent
+)
 
-from .decoders import ONLINEPUSH_DECODERS
+
+from .decoders import ONLINEPUSH_DECODERS, decode_trans_msg
 from .jce import DelMsgInfo, DeviceInfo, SvcRespPushMsg
 from .command import (
     PushMsg,
@@ -36,12 +41,10 @@ if TYPE_CHECKING:
 
 # OnlinePush.RespPush
 def encode_push_response(
+    session: "Session",
     seq: int,
-    session_id: bytes,
-    uin: int,
-    d2key: bytes,
     svrip: int,
-    delete_messages: List[DelMsgInfo] = [],
+    delete_messages: List[DelMsgInfo] = None,
     push_token: Optional[bytes] = None,
     service_type: int = 0,
     device_info: Optional[DeviceInfo] = None,
@@ -56,10 +59,8 @@ def encode_push_response(
         Source: com.tencent.mobileqq.service.message.MessageFactorySender.b
 
     Args:
+        session (Session): Session instance.
         seq (int): Packet sequence.
-        session_id (bytes): Session ID.
-        uin (int): User QQ number.
-        d2key (bytes): Siginfo d2 key.
         svrip (int): Svrip from push packet.
         delete_messages (List[DelMsgInfo]): List of delete messages.
         push_token (Optional[bytes]): Push token from push packet.
@@ -72,8 +73,8 @@ def encode_push_response(
     COMMAND_NAME = "OnlinePush.RespPush"
 
     resp = SvcRespPushMsg(
-        uin=uin,
-        del_infos=delete_messages,
+        uin=session.uin,
+        del_infos=delete_messages if delete_messages else [],
         svrip=svrip,
         push_token=push_token,
         service_type=service_type,
@@ -86,7 +87,7 @@ def encode_push_response(
         data=types.MAP({types.STRING("resp"): types.BYTES(payload)}),
     ).encode()
     packet = UniPacket.build(
-        uin, seq, COMMAND_NAME, session_id, 1, req_packet, d2key
+        session.uin, seq, COMMAND_NAME, session._session_id, 1, req_packet, session._siginfo.d2key
     )
     return packet
 
@@ -116,10 +117,8 @@ async def handle_c2c_sync(
         msg_type = message.head.type
 
         resp_packet = encode_push_response(
+            client,
             push.seq,
-            client._session_id,
-            client.uin,
-            client._siginfo.d2key,
             push.push.svrip,
             push_token=push.push.push_token or None,
         )
@@ -167,10 +166,8 @@ async def handle_push_msg(
             # ping
             if push.push.ping_flag == 1:
                 resp_packet = encode_push_response(
+                    client,
                     push.seq,
-                    client._session_id,
-                    client.uin,
-                    client._siginfo.d2key,
                     push.push.svrip,
                     push_token=push.push.push_token or None,
                     service_type=1,
@@ -191,10 +188,8 @@ async def handle_push_msg(
                 msg_time=message.head.time,
             )
             resp_packet = encode_push_response(
+                client,
                 push.seq,
-                client._session_id,
-                client.uin,
-                client._siginfo.d2key,
                 push.push.svrip,
                 [delete_info],
                 push_token=push.push.push_token or None,
@@ -237,10 +232,8 @@ async def handle_req_push(
 
     if isinstance(push, SvcReqPush):
         pkg = encode_push_response(
+            client,
             push.seq,
-            client._session_id,
-            push.message.uin,
-            client._siginfo.d2key,
             push.message.svrip,
             [
                 DelMsgInfo(
@@ -273,9 +266,65 @@ async def handle_req_push(
     return push
 
 
+# OnlinePush.PbPushTransMsg
+async def handle_push_trans_msg(
+    client: "Session", packet: IncomingPacket
+) -> IncomingPacket:
+    trans_msg = decode_trans_msg(packet.data)
+    # Make Response
+    resp = encode_push_response(
+        client,
+        packet.seq,
+        trans_msg.svrIp
+    )
+    await client.send(packet.seq, "OnlinePush.RespPush", resp)  # seems not working?
+    if str(packet.seq) in client._online_push_cache:
+        return packet
+    else:
+        client._online_push_cache[str(packet.seq)] = None
+
+    # Parse
+    if trans_msg.type == 34:  # LeaveEvent
+        group, target, subtype, operator = struct.unpack("!IxIBI", trans_msg.data)
+        if subtype in (2, 130):
+            client.dispatch_event(GroupMemberLeaveEvent(
+                group,
+                target
+            ))
+        else:
+            if target == client.uin:
+                operator = target
+            client.dispatch_event(GroupMemberLeaveEvent(
+                group,
+                target,
+                operator,
+                subtype in (1, 129)
+            ))
+    elif trans_msg.type == 44:
+        group, subtype, v1 = struct.unpack("!IBxI", trans_msg.data[:10])
+        if subtype in (0, 1):
+            client.dispatch_event(GroupMemberPermissionChangeEvent(
+                group,
+                v1,
+                trans_msg.data[10] > 0
+            ))
+        elif subtype == 255:
+            client.dispatch_event(TransferGroupEvent(
+                group,
+                v1,
+                struct.unpack("!I", trans_msg.data[10:14])[0]
+            ))
+    else:
+        logger.warning("OnlinePush.PbPushTransMsg: Unknown type -> " + str(trans_msg.type))
+
+    return packet
+
+
 __all__ = [
     "handle_c2c_sync",
     "handle_push_msg",
+    "handle_req_push",
+    "handle_push_trans_msg",
     "PushMsgCommand",
     "PushMsg",
     "PushMsgError",
