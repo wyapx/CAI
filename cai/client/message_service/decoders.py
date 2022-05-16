@@ -46,6 +46,7 @@ from .models import (
     SmallEmojiElement,
     GroupFileElement,
 )
+from ...pb.im.msg.resv import CustomFaceExtPb
 
 
 def parse_elements(elems: Sequence[Elem], ptt: Optional[Ptt]) -> List[Element]:
@@ -175,6 +176,7 @@ def parse_elements(elems: Sequence[Elem], ptt: Optional[Ptt]) -> List[Element]:
             )
         # PictureElemDecoder
         elif elem.HasField("custom_face"):
+            reserve = CustomFaceExtPb.ResvAttr.FromString(elem.custom_face.pb_reserve)
             if elem.custom_face.md5 and elem.custom_face.orig_url:
                 res.append(
                     ImageElement(
@@ -184,6 +186,7 @@ def parse_elements(elems: Sequence[Elem], ptt: Optional[Ptt]) -> List[Element]:
                         height=elem.custom_face.height,
                         md5=elem.custom_face.md5,
                         url="https://gchat.qpic.cn" + elem.custom_face.orig_url,
+                        is_emoji=reserve.imageBizType != 0
                     )
                 )
             elif elem.custom_face.md5:
@@ -197,6 +200,7 @@ def parse_elements(elems: Sequence[Elem], ptt: Optional[Ptt]) -> List[Element]:
                         url="https://gchat.qpic.cn/gchatpic_new/0/0-0-"
                         + elem.custom_face.md5.hex().upper()
                         + "/0",
+                        is_emoji=reserve.imageBizType != 0
                     )
                 )
         # PictureElemDecoder

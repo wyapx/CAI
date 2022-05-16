@@ -128,6 +128,7 @@ class ImageElement(Element):
     id: Optional[int] = 0
     url: Optional[str] = None
     filetype: Optional[int] = 1000
+    is_emoji: Optional[bool] = False
 
     @property
     def type(self) -> str:

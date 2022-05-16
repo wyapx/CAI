@@ -9,6 +9,7 @@ from cai.pb.im.msg.service.comm_elem import (
     MsgElemInfo_servtype2,
     MsgElemInfo_servtype3,
 )
+from cai.pb.im.msg.resv import CustomFaceExtPb
 from cai.pb.im.msg.msg_body import (
     Elem,
     Face,
@@ -45,7 +46,15 @@ def _build_image_elem(
         size=e.size,
         md5=e.md5,
         show_len=0,
-        download_len=0
+        download_len=0,
+        pb_reserve=CustomFaceExtPb.ResvAttr(
+            imageBizType=1 if e.is_emoji else 0,
+            customfaceType=0,
+            emojiPackageid=0 if e.filename.endswith(".gif") else None,
+            textSummary=("[动画表情]" if e.is_emoji else "[图片]").encode(),
+            emojiFrom=0,
+            source=6 if e.is_emoji else 2
+        ).SerializeToString()
         # flag=b"\x00\x00\x00\x00"
     )
 
@@ -71,6 +80,8 @@ def build_msg(elements: Sequence[models.Element]) -> MsgBody:
                 Elem(text=PlainText(str="[闪照]请使用新版手机QQ查看".encode()))
             )
         elif isinstance(e, models.ImageElement):
+            if e.filename.endswith(".gif"):
+                e.is_emoji = True
             ret.append(Elem(custom_face=_build_image_elem(e)))
         elif isinstance(e, models.AtElement):
             ret.append(

@@ -1,0 +1,30 @@
+syntax = "proto2";
+
+message CustomFaceExtPb {
+  message AnimationImageShow {
+    optional int32 effectId = 1;
+    optional bytes animationParam = 2;
+  }
+
+  message ResvAttr {
+    optional uint32 imageBizType = 1;
+    optional uint32 customfaceType = 2;
+    optional uint32 emojiPackageid = 3;
+    optional uint32 emojiId = 4;
+    optional string text = 5;
+    optional string doutuSuppliers = 6;
+    optional AnimationImageShow imageShow = 7;
+    optional bytes textSummary = 9;
+    optional uint32 emojiFrom = 10;
+    optional string emojiSource = 11;
+    optional string emojiWebUrl = 12;
+    optional string emojiIconUrl = 13;
+    optional string emojiMarketFaceName = 14;
+    optional uint32 source = 15;
+    optional string cameraCaptureTemplateinfo = 16;
+    optional string cameraCaptureMaterialname = 17;
+    optional string adEmoJumpUrl = 18;
+    optional string adEmoDescStr = 19;
+    optional bytes downloadIndex = 20;
+  }
+}

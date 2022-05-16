@@ -266,7 +266,7 @@ async def handle_push_notify(
         packet.data,
     )
     if isinstance(notify, PushNotify):
-        # sub account
+        # subaccount
         # if notify.notify.general_flag & 8 == 8:
         #     sub_uin = notify.notify.binded_uin
 
