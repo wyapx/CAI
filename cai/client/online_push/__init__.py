@@ -285,7 +285,7 @@ async def handle_push_trans_msg(
 
     # Parse
     if trans_msg.type == 34:  # LeaveEvent
-        group, target, subtype, operator = struct.unpack("!IxIBI", trans_msg.data)
+        group, target, subtype, operator = struct.unpack("!IxIBI", trans_msg.data[:14])
         if subtype in (2, 130):
             client.dispatch_event(GroupMemberLeaveEvent(
                 group,
