@@ -120,8 +120,10 @@ class Client(_Login, _Friend, _Group, _Events):
         finally:
             del self._msg_fut[rand]
 
-    async def upload_image(self, group_id: int, file: BinaryIO) -> ImageElement:
-        return await self._highway_session.upload_image(file, group_id)
+    async def upload_image(self, group_id: int, file: BinaryIO, as_emoji=False) -> ImageElement:
+        image = await self._highway_session.upload_image(file, group_id)
+        image.is_emoji = as_emoji
+        return image
 
     async def upload_voice(self, group_id: int, file: BinaryIO) -> VoiceElement:
         return await self._highway_session.upload_voice(file, group_id)
