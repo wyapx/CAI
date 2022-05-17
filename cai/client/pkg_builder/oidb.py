@@ -44,10 +44,9 @@ def build_mute_member_pkg(target_uin: int, group: int, duration: int) -> bytes:
     return build_oidb_sso_packet(
         1392, 8,
         struct.pack(
-            "!IQQQQHII",
+            "!IBxBII",
             group,
-            0, 0, 0, 0,  # 32 bytes padding
-            1,
+            32, 1,
             target_uin,
             duration
         )
