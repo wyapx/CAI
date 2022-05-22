@@ -7,12 +7,15 @@
     https://github.com/cscs181/CAI/blob/master/LICENSE
 """
 
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from cai.client import FriendGroup
 from cai.client import Friend as friend_t
 
 from .base import BaseAPI
+from .error import BotException
+from ..client.pkg_builder import build_recall_private_msg_pkg
+from ..pb.msf.msg.svc import PbMsgWithDrawResp
 
 
 class Friend(BaseAPI):
@@ -101,6 +104,23 @@ class Friend(BaseAPI):
             FriendListException: Get friend group list returned non-zero ret code.
         """
         return await self._executor("get_friend_group_list", cache)
+
+    async def recall_friend_msg(self, uin: int, msg: Tuple[int, int, int]):
+        ret = PbMsgWithDrawResp.FromString(
+            (
+                await self.session.send_unipkg_and_wait(
+                    "PbMessageSvc.PbMsgWithDraw",
+                    build_recall_private_msg_pkg(
+                        self.session.uin,
+                        uin,
+                        msg_list=[msg]
+                    ).SerializeToString()
+                )
+            ).data
+        ).c2c_with_draw[0]
+
+        if ret.result not in (2, 3):
+            raise BotException(ret.result, ret.errmsg)
 
 
 __all__ = ["Friend"]

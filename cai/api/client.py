@@ -18,11 +18,11 @@ from cai.settings.device import get_device
 from cai.pb.msf.msg.svc import PbSendMsgResp
 from cai.client.highway import HighWaySession
 from cai.settings.protocol import get_protocol, get_apk_info
-from cai.client.message_service.encoders import build_msg, make_group_msg_pkg
+from cai.client.message_service.encoders import build_msg, make_msg_pkg
 from cai.client.message_service.models import (
     Element,
     ImageElement,
-    VoiceElement, GroupMessage, VideoElement,
+    VoiceElement, GroupMessage, VideoElement, PrivateMessage,
 )
 
 from .group import Group as _Group
@@ -80,13 +80,13 @@ class Client(_Login, _Friend, _Group, _Events):
 
     async def send_group_msg(self, gid: int, msg: Sequence[Element]) -> Tuple[int, int, int]:
         """
-        Return:
-            Tuple [
-                sequence(int),
-                random(int),
-                send_time(int)
-            ]
-        """
+                Return:
+                    Tuple [
+                        sequence(int),
+                        random(int),
+                        send_time(int)
+                    ]
+                """
         # todo: split long msg
         seq, rand, fut = self.session.next_seq(), random.randint(1000, 1000000), asyncio.Future()
         self._msg_fut[rand] = fut
@@ -95,8 +95,11 @@ class Client(_Login, _Friend, _Group, _Events):
                 (
                     await self.session.send_unipkg_and_wait(
                         "MessageSvc.PbSendMsg",
-                        make_group_msg_pkg(
-                            seq, gid, rand, build_msg(msg)
+                        make_msg_pkg(
+                            seq,
+                            rand,
+                            build_msg(msg),
+                            group_id=gid
                         ).SerializeToString(),
                         seq=seq
                     )
@@ -119,6 +122,35 @@ class Client(_Login, _Friend, _Group, _Events):
                 raise BotException(resp.result, resp.errmsg)
         finally:
             del self._msg_fut[rand]
+
+    async def send_friend_msg(self, uin: int, msg: Sequence[Element]) -> Tuple[int, int, int]:
+        # todo: split long msg
+        seq, rand = (
+            self.session.next_friend_seq(),
+            random.randint(1000, 1000000)
+        )
+        resp: PbSendMsgResp = PbSendMsgResp.FromString(
+            (
+                await self.session.send_unipkg_and_wait(
+                    "MessageSvc.PbSendMsg",
+                    make_msg_pkg(
+                        seq,
+                        rand,
+                        build_msg(msg),
+                        uin=uin
+                    ).SerializeToString(),
+                    seq=seq
+                )
+            ).data
+        )
+        if resp.result == 0:
+            return (
+                seq,
+                rand,
+                resp.send_time
+            )
+        else:
+            raise BotException(resp.result, resp.errmsg)
 
     async def upload_image(self, group_id: int, file: BinaryIO, as_emoji=False) -> ImageElement:
         image = await self._highway_session.upload_image(file, group_id)

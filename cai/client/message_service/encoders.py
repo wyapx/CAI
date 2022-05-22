@@ -1,10 +1,10 @@
 import struct
 import zlib
-from typing import Union, Sequence
+from typing import Union, Sequence, Optional
 
 from cai.pb.msf.msg.svc import PbSendMsgReq
 from cai.pb.msf.msg.comm.comm_pb2 import ContentHead
-from cai.pb.msf.msg.svc.svc_pb2 import Grp, RoutingHead
+from cai.pb.msf.msg.svc.svc_pb2 import Grp, RoutingHead, C2C
 from cai.pb.im.msg.service.comm_elem import (
     MsgElemInfo_servtype2,
     MsgElemInfo_servtype3,
@@ -35,7 +35,7 @@ def _build_image_elem(
     return CustomFace(
         file_type=66,
         useful=1,
-        biz_type=0,
+        biz_type=5,
         width=e.width,
         height=e.height,
         file_id=e.id,
@@ -54,8 +54,8 @@ def _build_image_elem(
             textSummary=("[动画表情]" if e.is_emoji else "[图片]").encode(),
             emojiFrom=0,
             source=6 if e.is_emoji else 2
-        ).SerializeToString()
-        # flag=b"\x00\x00\x00\x00"
+        ).SerializeToString(),
+        flag=b"\x00\x00\x00\x00"
     )
 
 
@@ -206,11 +206,21 @@ def build_msg(elements: Sequence[models.Element]) -> MsgBody:
     return MsgBody(rich_text=RichText(elems=ret, ptt=ptt))
 
 
-def encode_send_group_msg_req(
-    seq: int, rand: int, group: int, body: MsgBody, head: ContentHead
+def encode_send_msg_req(
+    seq: int,
+    rand: int,
+    body: MsgBody,
+    head: ContentHead,
+    *,
+    group: Optional[int] = None,
+    uin: Optional[int] = None
 ) -> PbSendMsgReq:
+    assert group != uin
     return PbSendMsgReq(
-        routing_head=RoutingHead(grp=Grp(group_code=group)),
+        routing_head=RoutingHead(
+            c2c=C2C(to_uin=uin) if uin else None,
+            grp=Grp(group_code=group) if group else None
+        ),
         content_head=head,
         body=body,
         seq=seq,
@@ -219,7 +229,19 @@ def encode_send_group_msg_req(
     )
 
 
-def make_group_msg_pkg(seq: int, gid: int, rand: int, body: MsgBody) -> PbSendMsgReq:
-    return encode_send_group_msg_req(
-        seq, rand, gid, body, ContentHead(pkg_num=1, pkg_index=0, div_seq=0)
+def make_msg_pkg(
+    seq: int,
+    rand: int,
+    body: MsgBody,
+    group_id: Optional[int] = None,
+    uin: Optional[int] = None
+) -> PbSendMsgReq:
+    assert uin != group_id
+    return encode_send_msg_req(
+        seq,
+        rand,
+        body,
+        ContentHead(pkg_num=1, pkg_index=0, div_seq=0),
+        group=group_id,
+        uin=uin
     )

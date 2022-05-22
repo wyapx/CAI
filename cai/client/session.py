@@ -169,6 +169,7 @@ class Session:
 
         # server info
         self._seq: int = 0x3635
+        self._friend_seq: int = 0x597f
         self._time_diff: int = 0
         self._key: bytes = secrets.token_bytes(16)
         self._session_id: bytes = bytes([0x02, 0xB0, 0x5B, 0x8B])
@@ -436,6 +437,14 @@ class Session:
         """
         self._seq = (self._seq + 1) % 0x7FFF
         return self._seq
+
+    @property
+    def friend_seq(self) -> int:
+        return self._friend_seq
+
+    def next_friend_seq(self) -> int:
+        self._friend_seq += 1
+        return self._friend_seq
 
     async def send(
         self, seq: int, command_name: str, packet: Union[bytes, Packet]
