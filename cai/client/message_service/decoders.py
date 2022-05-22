@@ -45,6 +45,7 @@ from .models import (
     FlashImageElement,
     SmallEmojiElement,
     GroupFileElement,
+    TempMessage,
 )
 from ...pb.im.msg.resv import CustomFaceExtPb
 
@@ -445,8 +446,28 @@ class TroopMessageDecoder:
 class TempSessionDecoder:
     @classmethod
     def decode(cls, message: Msg) -> Optional[Event]:
-        # TODO
-        ...
+        seq = message.head.seq
+        rand = message.body.rich_text.attr.random
+        time = message.head.time
+        elems = message.body.rich_text.elems
+        ptt = message.body.rich_text.ptt
+        from_uin = message.head.from_uin
+        from_nick = message.head.from_nick
+
+        group_id = None
+        tmp_head = message.head.c2c_tmp_msg_head
+        if tmp_head.group_uin:
+            group_id = tmp_head.group_uin
+        return TempMessage(
+            message,
+            seq,
+            rand,
+            time,
+            group_id,
+            from_uin,
+            from_nick,
+            parse_elements(elems, ptt)
+        )
 
 
 class TroopSystemMessageDecoder:

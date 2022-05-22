@@ -62,6 +62,22 @@ class GroupMessage(Event):
         return "group_message"
 
 
+@dataclass
+class TempMessage(Event):
+    _msg: Msg
+    seq: int
+    rand: int
+    time: int
+    group_id: int
+    from_uin: int
+    from_group_card: str
+    message: List["Element"]
+
+    @property
+    def type(self) -> str:
+        return "temp_message"
+
+
 class Element(abc.ABC):
     @property
     @abc.abstractmethod
