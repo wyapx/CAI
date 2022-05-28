@@ -314,7 +314,7 @@ class Session:
         if self.connected:
             raise RuntimeError("Already connected to the server")
         if self.closed:
-            raise RuntimeError("Session is closed")
+            self._closed.clear()  # reopen
         log.network.debug("Getting Sso server")
         _server = server or await get_sso_server()
         log.logger.info(f"Connecting to server: {_server.host}:{_server.port}")
@@ -323,7 +323,7 @@ class Session:
                 _server.host, _server.port, ssl=False, timeout=3.0
             )
             self._start_receiver()
-        except ConnectionError as e:
+        except ConnectionError:
             raise
         except Exception as e:
             raise ConnectionError(
