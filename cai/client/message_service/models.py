@@ -11,7 +11,7 @@ This module is used to define message models.
 
 import abc
 from enum import IntEnum
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Union, Optional
 
 from cai.pb.msf.msg.comm import Msg
@@ -30,7 +30,6 @@ class PokeType(IntEnum):
 
 @dataclass
 class PrivateMessage(Event):
-    _msg: Msg
     seq: int
     time: int
     auto_reply: bool
@@ -38,6 +37,7 @@ class PrivateMessage(Event):
     from_nick: str
     to_uin: int
     message: List["Element"]
+    _msg: Msg = field(repr=False)
 
     @property
     def type(self) -> str:
@@ -46,7 +46,6 @@ class PrivateMessage(Event):
 
 @dataclass
 class GroupMessage(Event):
-    _msg: Msg
     seq: int
     rand: int
     time: int
@@ -56,6 +55,7 @@ class GroupMessage(Event):
     from_uin: int
     from_group_card: str
     message: List["Element"]
+    _msg: Msg = field(repr=False)
 
     @property
     def type(self) -> str:
@@ -64,7 +64,6 @@ class GroupMessage(Event):
 
 @dataclass
 class TempMessage(Event):
-    _msg: Msg
     seq: int
     rand: int
     time: int
@@ -72,6 +71,7 @@ class TempMessage(Event):
     from_uin: int
     from_group_card: str
     message: List["Element"]
+    _msg: Msg = field(repr=False)
 
     @property
     def type(self) -> str:
