@@ -8,81 +8,24 @@
 """
 import os
 import sys
-import signal
 import asyncio
 import logging
-import functools
-import traceback
 from io import BytesIO
 
 from PIL import Image
-
-from cai.api import Client, make_client
-from cai.client.message_service.models import TextElement
-from cai.client import Event, GroupMessage, OnlineStatus, PrivateMessage
-from cai.exceptions import (
-    LoginException,
-    ApiResponseError,
-    LoginDeviceLocked,
-    LoginSliderNeeded,
-    LoginAccountFrozen,
-    LoginCaptchaNeeded,
-)
+from cai import Client, LoginSliderNeeded, LoginCaptchaNeeded, LoginDeviceLocked
 
 
-async def run(ci: Client):
-    try:
-        await ci.login()
-        print(f"Login Success! Session status: {ci.session.status!r}")
-    except Exception as e:
-        await handle_failure(ci, e)
-    ci.session.add_event_listener(functools.partial(listen_message, ci))
-
-
-async def listen_message(client: Client, _, event: Event):
-    if isinstance(event, PrivateMessage):
-        print(f"{event.from_nick}(f{event.from_uin}) -> {event.message}")
-    elif isinstance(event, GroupMessage):
-        print(
-            f"{event.group_name}({event.group_id}:{event.from_uin}) -> {event.message}"
-        )
-        if event.message and hasattr(event.message[0], "content"):
-            if event.message[0].content == "0x114514":
-                await client.send_group_msg(
-                    event.group_id,
-                    [
-                        TextElement("Hello\n"),
-                        TextElement("Multiple element "),
-                        TextElement("Supported."),
-                    ],
-                )
-            elif event.message[0].content == "1919":
-                await client.send_group_msg(
-                    event.group_id,
-                    [
-                        await client.upload_image(
-                            event.group_id, open("test.png", "rb")
-                        ),
-                        TextElement("1234"),
-                    ],
-                )
-
-
-async def handle_failure(client: Client, exception: Exception):
+async def login_resolver(client: Client, exception: Exception):
     if isinstance(exception, LoginSliderNeeded):
-        print(
-            "Verify url:",
-            exception.verify_url.replace(
-                "ssl.captcha.qq.com", "txhelper.glitch.me"
-            ),
-        )
+        print("Verify url:", exception.verify_url.replace("ssl.captcha.qq.com", "txhelper.glitch.me"))
         ticket = input("Please enter the ticket: ").strip()
         try:
             await client.submit_slider_ticket(ticket)
             print("Login Success!")
             await asyncio.sleep(3)
         except Exception as e:
-            await handle_failure(client, e)
+            await login_resolver(client, e)
     elif isinstance(exception, LoginCaptchaNeeded):
         print("Captcha:")
         image = Image.open(BytesIO(exception.captcha_image))
@@ -93,41 +36,37 @@ async def handle_failure(client: Client, exception: Exception):
             print("Login Success!")
             await asyncio.sleep(3)
         except Exception as e:
-            await handle_failure(client, e)
-    elif isinstance(exception, LoginAccountFrozen):
-        print("Account is frozen!")
+            await login_resolver(client, e)
     elif isinstance(exception, LoginDeviceLocked):
         print("Device lock detected!")
-        way = (
-            "sms"
-            if exception.sms_phone
-            else "url"
-            if exception.verify_url
-            else ""
-        )
-        if exception.sms_phone and exception.verify_url:
+        if exception.sms_phone or exception.verify_url:
             while True:
+                print("Choose a method to verity: ")
                 choice = input(
                     f"1. Send sms message to {exception.sms_phone}.\n"
-                    f"2. Verify device by scanning.\nChoose: "
+                    if exception.sms_phone else ""
+                    f"2. Verify device by url.\n"
+                    if exception.verify_url else ""
+                    f"Choose: "
                 )
-                if "1" in choice:
+                if "1" in choice and exception.sms_phone:
                     way = "sms"
                     break
-                elif "2" in choice:
+                elif "2" in choice and exception.verify_url:
                     way = "url"
                     break
-                print(f"'{choice}' is not valid!")
-        if not way:
-            print("No way to verify device...")
-        elif way == "sms":
+                print(f"'{choice}' is invalid!")
+        else:
+            raise AssertionError("No way to verify device...")
+
+        if way == "sms":
             await client.request_sms()
             print(f"SMS was sent to {exception.sms_phone}!")
             sms_code = input("Please enter the sms_code: ").strip()
             try:
                 await client.submit_sms(sms_code)
             except Exception as e:
-                await handle_failure(client, e)
+                await login_resolver(client, e)
         elif way == "url":
             await client.close()
             print(f"Go to {exception.verify_url} to verify device!")
@@ -135,38 +74,40 @@ async def handle_failure(client: Client, exception: Exception):
             try:
                 await client.login()
             except Exception as e:
-                await handle_failure(client, e)
-    elif isinstance(exception, LoginException):
-        print("Login Error:", repr(exception))
-    elif isinstance(exception, ApiResponseError):
-        print("Response Error:", repr(exception))
+                await login_resolver(client, e)
     else:
-        print("Unknown Error:", repr(exception))
-        traceback.print_exc()
+        # LoginAccountFrozen, LoginException, ApiResponseError, etc...
+        raise
 
 
-if __name__ == "__main__":
+async def listener(ci, ev):
+    print(ev)  # print all event
 
-    logging.basicConfig(
+
+async def main():
+    account = os.getenv("ACCOUNT", "")
+    password = os.getenv("PASSWORD", "")
+    assert password and account, ValueError("account or password not set")
+
+    ci = Client(
+        int(account),
+        password,
+        protocol="ANDROID_PHONE"  # or use IPAD,ANDROID_WATCH,MACOS
+    )
+
+    try:
+        await ci.login()
+    except Exception as e:
+        await login_resolver(ci, e)
+    ci.add_event_listener(listener)
+    await ci.session.wait_closed()
+
+
+if __name__ == '__main__':
+    logging.basicConfig(  # Optional
         level=logging.DEBUG,
         handlers=[logging.StreamHandler(sys.stdout)],
         format="%(asctime)s %(name)s[%(levelname)s]: %(message)s",
     )
 
-    account = os.getenv("ACCOUNT", "")
-    password = os.getenv("PASSWORD")
-    assert password and account, ValueError("account or password not set")
-    account = int(account)
-    ci = Client(make_client(account, password))
-
-    close = asyncio.Event()
-
-    async def wait_cleanup():
-        await close.wait()
-        await ci.session.close()
-
-    loop = asyncio.get_event_loop()
-    loop.add_signal_handler(signal.SIGINT, close.set)
-    loop.add_signal_handler(signal.SIGTERM, close.set)
-    loop.create_task(run(ci))
-    loop.run_until_complete(wait_cleanup())
+    asyncio.run(main())

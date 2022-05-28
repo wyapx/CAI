@@ -6,32 +6,37 @@
 .. _LICENSE:
     https://github.com/cscs181/CAI/blob/master/LICENSE
 """
+import logging
 import os
-import signal
 import asyncio
-from hashlib import md5
+import sys
 
 from cai.api.client import Client
 
 
-async def run():
+async def main():
     account = os.getenv("ACCOUNT", "")
-    password = os.getenv("PASSWORD")
+    password = os.getenv("PASSWORD", "")
+    assert password and account, ValueError("account or password not set")
+
+    ci = Client(
+        int(account),
+        password,
+        protocol="ANDROID_PHONE"  # or use IPAD,ANDROID_WATCH,MACOS
+    )
+
+    await ci.login()
+    await asyncio.sleep(2)  # wait for a moment
     try:
-        account = int(account)
-        assert password
-    except Exception:
-        print(
-            f"Error: account '{account}', password '{password}'"  # type: ignore
-        )
-        return
+        await run(ci)
+    finally:
+        await ci.close()
 
-    client = Client()
-    client = await cai.login(account, md5(password.encode()).digest())
 
+async def run(ci: Client):
     # friend
-    friend_list = await cai.get_friend_list()
-    friend_group_list = await cai.get_friend_group_list()
+    friend_list = await ci.get_friend_list()
+    friend_group_list = await ci.get_friend_group_list()
     print("========== friends ==========", *friend_list, sep="\n")
     print("========== friend groups ==========", *friend_group_list, sep="\n")
     example_friend = friend_list[0]
@@ -42,7 +47,7 @@ async def run():
     print("remark: ", example_friend.remark)
     print("group: ", await example_friend.get_group())
 
-    group_list = await cai.get_group_list()
+    group_list = await ci.get_group_list()
     print("\n========== group list ==========", *group_list, sep="\n")
     example_group = group_list[0]
     # group = await cai.get_group(group_id)
@@ -58,15 +63,11 @@ async def run():
     )
 
 
-if __name__ == "__main__":
-    close = asyncio.Event()
+if __name__ == '__main__':
+    logging.basicConfig(  # Optional
+        level=logging.DEBUG,
+        handlers=[logging.StreamHandler(sys.stdout)],
+        format="%(asctime)s %(name)s[%(levelname)s]: %(message)s",
+    )
 
-    async def wait_cleanup():
-        await close.wait()
-        await cai.close_all()
-
-    loop = asyncio.get_event_loop()
-    loop.add_signal_handler(signal.SIGINT, close.set)
-    loop.add_signal_handler(signal.SIGTERM, close.set)
-    loop.create_task(run())
-    loop.run_until_complete(wait_cleanup())
+    asyncio.run(main())

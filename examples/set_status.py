@@ -7,42 +7,43 @@
     https://github.com/cscs181/CAI/blob/master/LICENSE
 """
 import os
-import signal
+import sys
 import asyncio
-from hashlib import md5
+import logging
 
-import cai
+from cai import Client
 from cai.client import OnlineStatus
 
 
-async def run():
+async def main():
     account = os.getenv("ACCOUNT", "")
-    password = os.getenv("PASSWORD")
-    try:
-        account = int(account)
-        assert password
-    except Exception:
-        print(
-            f"Error: account '{account}', password '{password}'"  # type: ignore
-        )
-        return
+    password = os.getenv("PASSWORD", "")
+    assert password and account, ValueError("account or password not set")
 
-    client = await cai.login(account, md5(password.encode()).digest())
+    ci = Client(
+        int(account),
+        password,
+        protocol="ANDROID_PHONE"  # or use IPAD,ANDROID_WATCH,MACOS
+    )
 
-    await asyncio.sleep(10)
-    await cai.set_status(OnlineStatus.Qme)
-    print("Current session status: ", client.status)
+    await ci.login()
+
+    await ci.set_status(
+        status=OnlineStatus.Qme,  # Q我吧
+        battery_status=67,  # 1-100
+        is_power_connected=True
+    )
+
+    print("Current session status:", ci.status)
+
+    await ci.session.wait_closed()
 
 
-if __name__ == "__main__":
-    close = asyncio.Event()
+if __name__ == '__main__':
+    logging.basicConfig(  # Optional
+        level=logging.DEBUG,
+        handlers=[logging.StreamHandler(sys.stdout)],
+        format="%(asctime)s %(name)s[%(levelname)s]: %(message)s",
+    )
 
-    async def wait_cleanup():
-        await close.wait()
-        await cai.close_all()
-
-    loop = asyncio.get_event_loop()
-    loop.add_signal_handler(signal.SIGINT, close.set)
-    loop.add_signal_handler(signal.SIGTERM, close.set)
-    loop.create_task(run())
-    loop.run_until_complete(wait_cleanup())
+    asyncio.run(main())
