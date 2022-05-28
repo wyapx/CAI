@@ -15,5 +15,5 @@ from .command import Command
 from .packet import IncomingPacket
 from .session import HANDLERS, Session
 from .status_service import OnlineStatus, RegPushReason
-from .message_service import GroupMessage, PrivateMessage
 from .models import Group, Friend, FriendGroup, GroupMember, GroupMemberRole
+from .events.common import GroupMessage, PrivateMessage, TempMessage

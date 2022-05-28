@@ -19,7 +19,7 @@ from cai.client.packet import UniPacket, IncomingPacket
 from cai.pb.msf.msg.svc import PbGetMsgReq, PbDeleteMsgReq
 
 from .decoders import MESSAGE_DECODERS
-from .models import GroupMessage, PrivateMessage
+from ..events.common import PrivateMessage, GroupMessage
 from .command import (
     PushNotify,
     GetMessageFail,
@@ -343,6 +343,4 @@ __all__ = [
     "PushForceOfflineCommand",
     "PushForceOffline",
     "PushForceOfflineError",
-    "PrivateMessage",
-    "GroupMessage",
 ]

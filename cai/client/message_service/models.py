@@ -11,12 +11,10 @@ This module is used to define message models.
 
 import abc
 from enum import IntEnum
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Union, Optional
 
-from cai.pb.msf.msg.comm import Msg
 from cai.pb.im.msg.msg_body import Ptt
-from cai.client.events.base import Event
 
 
 class PokeType(IntEnum):
@@ -26,56 +24,6 @@ class PokeType(IntEnum):
     XinSui = 4
     SixSixSix = 5
     FangDaZhao = 6
-
-
-@dataclass
-class PrivateMessage(Event):
-    seq: int
-    time: int
-    auto_reply: bool
-    from_uin: int
-    from_nick: str
-    to_uin: int
-    message: List["Element"]
-    _msg: Msg = field(repr=False)
-
-    @property
-    def type(self) -> str:
-        return "private_message"
-
-
-@dataclass
-class GroupMessage(Event):
-    seq: int
-    rand: int
-    time: int
-    group_id: int
-    group_name: str
-    group_level: int
-    from_uin: int
-    from_group_card: str
-    message: List["Element"]
-    _msg: Msg = field(repr=False)
-
-    @property
-    def type(self) -> str:
-        return "group_message"
-
-
-@dataclass
-class TempMessage(Event):
-    seq: int
-    rand: int
-    time: int
-    group_id: int
-    from_uin: int
-    from_group_card: str
-    message: List["Element"]
-    _msg: Msg = field(repr=False)
-
-    @property
-    def type(self) -> str:
-        return "temp_message"
 
 
 class Element(abc.ABC):

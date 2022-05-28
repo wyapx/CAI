@@ -12,7 +12,8 @@ import asyncio
 import sys
 
 from cai import Client
-from cai.client import Event, GroupMessage, PrivateMessage
+from cai.client import Event
+from cai.client.events.common import PrivateMessage, GroupMessage
 
 
 async def main():

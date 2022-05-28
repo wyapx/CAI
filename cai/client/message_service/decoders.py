@@ -17,6 +17,7 @@ from cai.client.events import Event
 from cai.pb.msf.msg.comm import Msg
 from cai.pb.im.msg.msg_body import Ptt, Elem
 from cai.pb.im.msg.obj_msg import ObjMsg
+from cai.pb.im.msg.resv import CustomFaceExtPb
 from cai.pb.im.msg.service.comm_elem import (
     MsgElemInfo_servtype2,
     MsgElemInfo_servtype3,
@@ -33,21 +34,18 @@ from .models import (
     PokeElement,
     TextElement,
     AtAllElement,
-    GroupMessage,
     ImageElement,
     ReplyElement,
     ShakeElement,
     VoiceElement,
     VideoElement,
-    PrivateMessage,
     RichMsgElement,
     CustomDataElement,
     FlashImageElement,
     SmallEmojiElement,
     GroupFileElement,
-    TempMessage,
 )
-from ...pb.im.msg.resv import CustomFaceExtPb
+from ..events.common import PrivateMessage, GroupMessage, TempMessage
 
 
 def parse_elements(elems: Sequence[Elem], ptt: Optional[Ptt]) -> List[Element]:
@@ -365,7 +363,6 @@ class BuddyMessageDecoder:
         ptt = message.body.rich_text.ptt
 
         return PrivateMessage(
-            message,
             seq,
             time,
             auto_reply,
@@ -373,6 +370,7 @@ class BuddyMessageDecoder:
             from_nick,
             to_uin,
             parse_elements(elems, ptt),
+            message,
         )
 
 
@@ -430,7 +428,6 @@ class TroopMessageDecoder:
             )
 
         return GroupMessage(
-            message,
             seq,
             rand,
             time,
@@ -440,6 +437,7 @@ class TroopMessageDecoder:
             from_uin,
             troop.group_card.decode("utf-8"),
             parse_elements(elems, ptt),
+            message,
         )
 
 
@@ -459,14 +457,14 @@ class TempSessionDecoder:
         if tmp_head.group_uin:
             group_id = tmp_head.group_uin
         return TempMessage(
-            message,
             seq,
             rand,
             time,
             group_id,
             from_uin,
             from_nick,
-            parse_elements(elems, ptt)
+            parse_elements(elems, ptt),
+            message,
         )
 
 

@@ -41,12 +41,14 @@ async def login_resolver(client: Client, exception: Exception):
         print("Device lock detected!")
         if exception.sms_phone or exception.verify_url:
             while True:
-                print("Choose a method to verity: ")
+                print(
+                    "Choose a method to verity: \n",
+                    " ".join([
+                        f"1. Send sms message to {exception.sms_phone}.\n" if exception.sms_phone else "",
+                        f"2. Verify device by url.\n" if exception.verify_url else ""
+                    ])
+                )
                 choice = input(
-                    f"1. Send sms message to {exception.sms_phone}.\n"
-                    if exception.sms_phone else ""
-                    f"2. Verify device by url.\n"
-                    if exception.verify_url else ""
                     f"Choose: "
                 )
                 if "1" in choice and exception.sms_phone:
@@ -68,7 +70,6 @@ async def login_resolver(client: Client, exception: Exception):
             except Exception as e:
                 await login_resolver(client, e)
         elif way == "url":
-            await client.close()
             print(f"Go to {exception.verify_url} to verify device!")
             input("Press ENTER after verification to continue login...")
             try:

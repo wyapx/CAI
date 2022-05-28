@@ -19,10 +19,12 @@ from cai.pb.msf.msg.svc import PbSendMsgResp
 from cai.client.highway import HighWaySession
 from cai.settings.protocol import get_protocol, get_apk_info
 from cai.client.message_service.encoders import build_msg, make_msg_pkg
+from cai.client.events.common import GroupMessage
 from cai.client.message_service.models import (
     Element,
     ImageElement,
-    VoiceElement, GroupMessage, VideoElement, PrivateMessage,
+    VoiceElement,
+    VideoElement,
 )
 
 from .group import Group as _Group
