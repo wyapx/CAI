@@ -12,8 +12,7 @@ import random
 from typing import Union, BinaryIO, Optional, Sequence, Tuple, Dict, NoReturn
 
 from cai import log
-from cai.client import OnlineStatus
-from cai.client import Session
+from cai.client import Session, OnlineStatus
 from cai.settings.device import get_device
 from cai.pb.msf.msg.svc import PbSendMsgResp
 from cai.client.highway import HighWaySession

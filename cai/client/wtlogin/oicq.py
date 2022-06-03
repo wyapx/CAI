@@ -221,15 +221,15 @@ class LoginSuccess(UnknownLoginStatus):
         self.ksid = t119.get(0x108)
         self.s_key = t119[0x120]
         self.pwd_flag = t119.get(0x186, {}).get("pwd_flag")
-        self.encrypted_a1 = t119[0x106]
-        self.no_pic_sig = t119[0x16A]
+        self.encrypted_a1 = t119.get(0x106)  # notset on token_login
+        self.no_pic_sig = t119.get(0x16A, b"")  # notset on token_login, need cache
 
         self.d2 = t119[0x143]
         self.d2key = t119[0x305]
         self.ps_key_map = t119.get(0x512, {}).get("ps_key_map", {})
         self.pt4_token_map = t119.get(0x512, {}).get("pt4_token_map", {})
-        self.wt_session_ticket = t119[0x133]
-        self.wt_session_ticket_key = t119[0x134]
+        self.wt_session_ticket = t119.get(0x133)  # need cache
+        self.wt_session_ticket_key = t119.get(0x134)  # need cache
         self.device_token = t119.get(0x322, None)
 
 

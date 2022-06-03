@@ -43,6 +43,7 @@ from .oicq import (
 
 if TYPE_CHECKING:
     from cai.client import Session
+    from cai.client.models import SigInfo
 
 
 # submit captcha
@@ -528,6 +529,117 @@ def encode_login_request9(
     return packet
 
 
+# login with siginfo
+def encode_login_request11(
+    seq: int,
+    uin: int,
+    key: bytes,
+    ksid: bytes,
+    session_id: bytes,
+    apk_info: ApkInfo,
+    device: DeviceInfo,
+    sig_info: "SigInfo"
+) -> Packet:
+    COMMAND_ID = 2064
+    COMMAND_NAME = "wtlogin.exchange_emp"
+
+
+    APK_ID = apk_info.apk_id
+    APK_VERSION = apk_info.version
+    APK_SIGN = apk_info.apk_sign
+    APK_BUILD_TIME = apk_info.build_time
+    APP_ID = apk_info.app_id
+    SUB_APP_ID = apk_info.sub_app_id
+    APP_CLIENT_VERSION = 0
+    SDK_VERSION = apk_info.sdk_version
+    SSO_VERSION = apk_info.sso_version
+    BITMAP = apk_info.bitmap
+    MAIN_SIGMAP = apk_info.main_sigmap
+    SUB_SIGMAP = apk_info.sub_sigmap
+
+    LOCAL_ID = 2052  # oicq.wlogin_sdk.request.t.v
+    NETWORK_TYPE = (device.apn == "wifi") + 1
+    GUID_FLAG = 0
+
+    data = Packet.build(
+        struct.pack("!HH", 11, 16),
+        TlvEncoder.t100(
+            SSO_VERSION, APP_ID, SUB_APP_ID, APP_CLIENT_VERSION, MAIN_SIGMAP
+        ),
+        TlvEncoder.t10a(sig_info.tgt),
+        TlvEncoder.t116(BITMAP, SUB_SIGMAP),
+        TlvEncoder.t144(
+            device.imei.encode(),
+            device.bootloader,
+            device.proc_version,
+            device.version.codename,
+            device.version.incremental,
+            device.fingerprint,
+            device.boot_id,
+            device.android_id,
+            device.baseband,
+            device.version.incremental,
+            device.os_type.encode(),
+            device.version.release.encode(),
+            NETWORK_TYPE,
+            device.sim.encode(),
+            device.apn.encode(),
+            False,
+            True,
+            False,
+            GUID_FLAG,
+            device.model.encode(),
+            device.guid,
+            device.brand.encode(),
+            md5(sig_info.d2key).digest()  # device.tgtgt,
+        ),
+        TlvEncoder.t143(sig_info.d2),
+        TlvEncoder.t142(APK_ID),
+        TlvEncoder.t154(seq),
+        TlvEncoder.t18(APP_ID, APP_CLIENT_VERSION, uin),
+        TlvEncoder.t141(device.sim.encode(), NETWORK_TYPE, device.apn.encode()),
+        TlvEncoder.t8(LOCAL_ID),
+        TlvEncoder.t147(APP_ID, APK_VERSION.encode(), APK_SIGN),
+        TlvEncoder.t177(APK_BUILD_TIME, SDK_VERSION),
+        TlvEncoder.t187(device.mac_address.encode()),
+        TlvEncoder.t188(device.android_id.encode()),
+        TlvEncoder.t202(device.wifi_bssid.encode(), device.wifi_ssid.encode()),
+        TlvEncoder.t511(
+            [
+                "tenpay.com",
+                "openmobile.qq.com",
+                "docs.qq.com",
+                "connect.qq.com",
+                "qzone.qq.com",
+                "vip.qq.com",
+                "gamecenter.qq.com",
+                "qun.qq.com",
+                "game.qq.com",
+                "qqweb.qq.com",
+                "office.qq.com",
+                "ti.qq.com",
+                "mail.qq.com",
+                "mma.qq.com",
+            ]
+        ),  # com.tencent.mobileqq.msf.core.auth.l
+    )
+    oicq_packet = OICQRequest.build_encoded(
+        uin, COMMAND_ID, ECDH.encrypt(data, key), ECDH.id
+    )
+    sso_packet = CSsoBodyPacket.build(
+        seq,
+        SUB_APP_ID,
+        COMMAND_NAME,
+        device.imei,
+        session_id,
+        ksid,
+        oicq_packet,
+    )
+    # encrypted by 16-byte zero. Reference: ``CSSOData::serialize``
+    packet = CSsoDataPacket.build(uin, 2, sso_packet, key=bytes(16))
+    return packet
+
+
 # device lock login, when status 204
 def encode_login_request20(
     seq: int,
@@ -842,11 +954,13 @@ async def handle_oicq_response(
             or client._siginfo.wt_session_ticket_key
         )
 
-        key = md5(
-            client._password_md5 + bytes(4) + struct.pack(">I", client._uin)
-        ).digest()
-        decrypted = qqtea_decrypt(response.encrypted_a1, key)
-        client.device.tgtgt = decrypted[51:67]
+        if response.encrypted_a1:  # notset on token_login
+            key = md5(
+                client._password_md5 + bytes(4) + struct.pack(">I", client._uin)
+            ).digest()
+
+            decrypted = qqtea_decrypt(response.encrypted_a1, key)
+            client.device.tgtgt = decrypted[51:67]
     elif isinstance(response, NeedCaptcha):
         client._t104 = response.t104 or client._t104
     elif isinstance(response, DeviceLocked):
@@ -866,9 +980,11 @@ async def handle_oicq_response(
 __all__ = [
     "encode_login_request2_captcha",
     "encode_login_request2_slider",
+    "encode_login_request7",
+    "encode_login_request8",
     "encode_login_request9",
     "encode_login_request20",
-    "encode_exchange_emp_10",
+    "encode_login_request11",
     "encode_exchange_emp_15",
     "handle_oicq_response",
     "OICQResponse",

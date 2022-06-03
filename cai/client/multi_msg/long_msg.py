@@ -67,7 +67,7 @@ async def build_multi_apply_up_pkg(
     )
 
 
-async def _handle_multi_resp_body(
+async def handle_multi_resp_body(
     client: "Session", pkg: "IncomingPacket"
 ) -> MultiApplyResp:
     mrb = MultiRspBody.FromString(pkg.data).multimsgApplyupRsp

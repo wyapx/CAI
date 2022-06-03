@@ -8,6 +8,7 @@ This module is used to control session actions (low-level api).
 .. _LICENSE:
     https://github.com/cscs181/CAI/blob/master/LICENSE
 """
+import hashlib
 import time
 import struct
 import asyncio
@@ -51,7 +52,7 @@ from .events.common import BotOnlineEvent, BotOfflineEvent
 from .packet import UniPacket, IncomingPacket
 from .command import Command, _packet_to_command
 from .sso_server import SsoServer, get_sso_server
-from .multi_msg.long_msg import _handle_multi_resp_body
+from .multi_msg.long_msg import handle_multi_resp_body
 from .heartbeat import Heartbeat, encode_heartbeat, handle_heartbeat
 from .models import Group, Friend, SigInfo, FriendGroup, GroupMember
 from .config_push import FileServerPushList, handle_config_push_request
@@ -108,7 +109,7 @@ from .wtlogin import (
     encode_exchange_emp_15,
     encode_login_request20,
     encode_login_request2_slider,
-    encode_login_request2_captcha,
+    encode_login_request2_captcha, encode_login_request11,
 )
 
 HT = Callable[["Session", IncomingPacket], Awaitable[Command]]
@@ -133,7 +134,7 @@ HANDLERS: Dict[str, HT] = {
     "OnlinePush.PbC2CMsgSync": handle_c2c_sync,
     "OnlinePush.PbPushC2CMsg": handle_push_msg,
     # "OnlinePush.PbPushBindUinGroupMsg": handle_push_msg,  # sub account
-    "MultiMsg.ApplyUp": _handle_multi_resp_body,
+    "MultiMsg.ApplyUp": handle_multi_resp_body,
     "OnlinePush.ReqPush": handle_req_push,
     "OnlinePush.PbPushTransMsg": handle_push_trans_msg
 }
@@ -172,7 +173,7 @@ class Session:
         self._friend_seq: int = 0x597f
         self._time_diff: int = 0
         self._key: bytes = secrets.token_bytes(16)
-        self._session_id: bytes = bytes([0x02, 0xB0, 0x5B, 0x8B])
+        self._session_id: bytes = secrets.token_bytes(4)  # bytes([0x02, 0xB0, 0x5B, 0x8B])
         self._connection: Optional[Connection] = None
         self._heartbeat_interval: int = 300
         self._heartbeat_enabled: bool = False
@@ -718,6 +719,23 @@ class Session:
             self.apk_info,
         )
         response = await self.send_and_wait(seq, "wtlogin.login", packet)
+        return await self._handle_login_response(response)
+
+    async def token_login(self, sig_info: SigInfo) -> LoginSuccess:
+        seq = self.next_seq()
+        self._siginfo = sig_info
+        self.device.tgtgt = hashlib.md5(self._siginfo.d2key).digest()
+        packet = encode_login_request11(
+            seq,
+            self.uin,
+            self._key,
+            self._ksid,
+            self._session_id,
+            self._apk_info,
+            self._device,
+            sig_info
+        )
+        response = await self.send_and_wait(seq, "wtlogin.exchange_emp", packet)
         return await self._handle_login_response(response)
 
     async def submit_captcha(

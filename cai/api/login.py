@@ -6,6 +6,8 @@
 .. _LICENSE:
     https://github.com/cscs181/CAI/blob/master/LICENSE
 """
+import pickle
+
 from cai.exceptions import LoginException
 
 from .base import BaseAPI
@@ -29,6 +31,19 @@ class Login(BaseAPI):
         except Exception:
             await self.session.close()
             raise
+
+    async def token_login(self, sig: bytes):
+        await self.session.connect()
+        try:
+            await self._executor("token_login", pickle.loads(sig))
+        except LoginException:
+            raise  # user handle required
+        except Exception:
+            await self.session.close()
+            raise
+
+    def dump_sig(self) -> bytes:
+        return pickle.dumps(self.session._siginfo)
 
     async def submit_captcha(self, captcha: str, captcha_sign: bytes) -> bool:
         """Submit captcha data to login.
