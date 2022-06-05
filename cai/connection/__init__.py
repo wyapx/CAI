@@ -94,6 +94,12 @@ class Connection:
             ) from e
         self._closed.clear()
 
+    async def _on_eof(self, exc: BaseException):
+        await self.close()
+        raise ConnectionAbortedError(
+            f"Lost connection to {self._host}:{self._port}"
+        ) from exc
+
     async def close(self):
         if self._writer:
             self._writer.close()
@@ -109,30 +115,21 @@ class Connection:
         try:
             data = await self.reader.readexactly(num_bytes)
         except (asyncio.IncompleteReadError, IOError, OSError) as e:
-            await self.close()
-            raise ConnectionAbortedError(
-                f"Lost connection to {self._host}:{self._port}"
-            ) from e
+            return await self._on_eof(e)
         return data
 
     async def read_line(self):
         try:
             data = await self.reader.readline()
         except (asyncio.IncompleteReadError, IOError, OSError) as e:
-            await self.close()
-            raise ConnectionAbortedError(
-                f"Lost connection to {self._host}:{self._port}"
-            ) from e
+            return await self._on_eof(e)
         return data
 
     async def read_all(self):
         try:
             data = await self.reader.read(-1)
         except (asyncio.IncompleteReadError, IOError, OSError) as e:
-            await self.close()
-            raise ConnectionAbortedError(
-                f"Lost connection to {self._host}:{self._port}"
-            ) from e
+            return await self._on_eof(e)
         return data
 
     def write(self, data: Union[bytes, Packet]):

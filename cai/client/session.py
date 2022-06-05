@@ -370,7 +370,11 @@ class Session:
 
         if not change_server and self._connection:
             log.network.warning("reconnecting...")
-            await self._connection.reconnect()
+            try:
+                await self._connection.reconnect()
+            except ConnectionError:
+                log.network.warning("reconnect fail. retrying...")
+                await self.reconnect(True, server)
             self._start_receiver()
             log.network.info("reconnected")
             return
@@ -530,7 +534,7 @@ class Session:
 
                 data = await self.connection.read_bytes(length)
             except ConnectionError as e:
-                log.logger.error(f"{self.uin} connection lost: {str(e)}")
+                log.logger.exception(f"{self.uin} connection lost: {str(e)}")
                 break
 
             try:
