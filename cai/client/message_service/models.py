@@ -12,7 +12,7 @@ This module is used to define message models.
 import abc
 from enum import IntEnum
 from dataclasses import dataclass
-from typing import List, Union, Optional
+from typing import List, Sequence, Union, Optional
 
 from cai.pb.im.msg.msg_body import Ptt
 
@@ -31,6 +31,29 @@ class Element(abc.ABC):
     @abc.abstractmethod
     def type(self) -> str:
         raise NotImplementedError
+
+
+@dataclass
+class Node:
+    from_uin: int
+    nickname: str
+    send_time: int
+    message: Sequence["Element"]
+
+
+@dataclass
+class ForwardMessage:
+    nodes: List[Node]
+
+    def add_node(self, from_uin: int, nickname: str, send_time: int, message: Sequence["Element"]):
+        self.nodes.append(
+            Node(
+                from_uin,
+                nickname,
+                send_time,
+                message
+            )
+        )
 
 
 @dataclass
@@ -126,7 +149,8 @@ class VoiceElement(Element):
     md5: bytes
     size: int
     group_file_key: bytes
-    url: str = None
+    url: Optional[str] = None
+    time: int = 0
 
     @property
     def type(self) -> str:
@@ -136,7 +160,7 @@ class VoiceElement(Element):
     def _pb_reserve(self) -> bytes:
         return bytes([8, 0, 40, 0, 56, 0])
 
-    def to_ptt(self) -> Ptt:
+    def _to_ptt(self) -> Ptt:
         return Ptt(
             file_type=self.file_type,
             src_uin=self.from_uin,

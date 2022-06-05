@@ -150,7 +150,7 @@ def build_msg(elements: Sequence[models.Element]) -> MsgBody:
                 )
             )
         elif isinstance(e, models.VoiceElement):
-            ptt = e.to_ptt()
+            ptt = e._to_ptt()
             break
         elif isinstance(e, models.VideoElement):
             ret.append(

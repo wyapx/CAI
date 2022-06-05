@@ -73,12 +73,13 @@ def parse_elements(elems: Sequence[Elem], ptt: Optional[Ptt]) -> List[Element]:
             return [
                 VoiceElement(
                     ptt.file_name.decode(),
-                    info["filetype"],
+                    ptt.file_type,
                     ptt.src_uin,
                     ptt.file_md5,
                     ptt.file_size,
                     bytes.fromhex(info["rkey"]),
                     "https://grouptalk.c2c.qq.com" + ptt.down_para.decode(),
+                    ptt.time
                 )
             ]
     res: List[Element] = []
