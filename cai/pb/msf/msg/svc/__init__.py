@@ -16,3 +16,4 @@ Generate all protobuf file using:
 """
 
 from .svc_pb2 import *
+from .transmit_pb2 import *

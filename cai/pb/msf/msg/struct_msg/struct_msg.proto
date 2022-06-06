@@ -1,0 +1,258 @@
+syntax = "proto2";
+
+// source: tencent/mobileim/structmsg
+
+
+message AddFrdSNInfo {
+  optional uint32 notSeeDynamic = 1;
+  optional uint32 setSn = 2;
+}
+
+message FlagInfo {
+  optional uint32 GrpMsg_Kick_Admin = 1;
+  optional uint32 GrpMsg_HiddenGrp = 2;
+  optional uint32 GrpMsg_WordingDown = 3;
+  optional uint32 FrdMsg_GetBusiCard = 4;
+  optional uint32 GrpMsg_GetOfficialAccount = 5;
+  optional uint32 GrpMsg_GetPayInGroup = 6;
+  optional uint32 FrdMsg_Discuss2ManyChat = 7;
+  optional uint32 GrpMsg_NotAllowJoinGrp_InviteNotFrd = 8;
+  optional uint32 FrdMsg_NeedWaitingMsg = 9;
+  optional uint32 FrdMsgUint32NeedAllUnreadMsg = 10;
+  optional uint32 GrpMsg_NeedAutoAdminWording = 11;
+  optional uint32 GrpMsgGetTransferGroupMsgFlag = 12;
+  optional uint32 GrpMsgGetQuitPayGroupMsgFlag = 13;
+  optional uint32 GrpMsgSupportInviteAutoJoin = 14;
+  optional uint32 GrpMsgMaskInviteAutoJoin = 15;
+  optional uint32 GrpMsg_GetDisbandedByAdmin = 16;
+  optional uint32 GrpMsg_GetC2CInviteJoinGroup = 17;
+}
+
+message FriendInfo {
+  optional string jointFriend = 1;
+  optional string blacklist = 2;
+}
+
+message GroupInfo {
+  optional uint32 groupAuthType = 1;
+  optional uint32 displayAction = 2;
+  optional string alert = 3;
+  optional string detailAlert = 4;
+  optional string otherAdminDone = 5;
+  optional uint32 appPrivilegeFlag = 6;
+}
+
+message MsgInviteExt {
+  optional uint32 srcType = 1;
+  optional uint64 srcCode = 2;
+  optional uint32 waitState = 3;
+}
+
+message MsgPayGroupExt {
+  optional uint64 joinGrpTime = 1;
+  optional uint64 quitGrpTime = 2;
+}
+
+message ReqNextSystemMsg {
+  optional uint32 num = 1;
+  optional uint64 followingFriendSeq = 2;
+  optional uint64 followingGroupSeq = 3;
+  optional uint32 checktype = 4;
+  optional FlagInfo flag = 5;
+  optional uint32 language = 6;
+  optional uint32 version = 7;
+  optional uint64 friendMsgTypeFlag = 8;
+  optional uint32 reqMsgType = 9;
+}
+
+message ReqSystemMsg {
+  optional uint32 num = 1;
+  optional uint64 latestFriendSeq = 2;
+  optional uint64 latestGroupSeq = 3;
+  optional uint32 version = 4;
+  optional uint32 language = 5;
+}
+
+message ReqSystemMsgAction {
+  optional uint32 type = 1;
+  optional uint64 seq = 2;
+  optional uint64 reqUin = 3;
+  optional uint32 subType = 4;
+  optional uint32 srcId = 5;
+  optional uint32 subSrcId = 6;
+  optional uint32 groupMsgType = 7;
+  optional SystemMsgActionInfo actionInfo = 8;
+  optional uint32 language = 9;
+}
+
+message ReqSystemMsgNew {
+  optional uint32 num = 1;
+  optional uint64 latestFriendSeq = 2;
+  optional uint64 latestGroupSeq = 3;
+  optional uint32 version = 4;
+  optional uint32 checktype = 5;
+  optional FlagInfo flag = 6;
+  optional uint32 language = 7;
+  optional bool isGetFrdRibbon = 8;
+  optional bool isGetGrpRibbon = 9;
+  optional uint64 friendMsgTypeFlag = 10;
+  optional uint32 reqMsgType = 11;
+}
+
+message ReqSystemMsgRead {
+  optional uint64 latestFriendSeq = 1;
+  optional uint64 latestGroupSeq = 2;
+  optional uint32 type = 3;
+  optional uint32 checktype = 4;
+  optional uint32 reqMsgType = 5;
+}
+
+message RspHead {
+  optional int32 result = 1;
+  optional string fail = 2;
+}
+
+message RspNextSystemMsg {
+  optional RspHead head = 1;
+  repeated StructMsg msgs = 2;
+  optional uint64 followingFriendSeq = 3;
+  optional uint64 followingGroupSeq = 4;
+  optional uint32 checktype = 5;
+  optional string gameNick = 100;
+  optional bytes undecidForQim = 101;
+  optional uint32 unReadCount3 = 102;
+}
+
+message RspSystemMsg {
+  optional RspHead head = 1;
+  repeated StructMsg msgs = 2;
+  optional uint32 unreadCount = 3;
+  optional uint64 latestFriendSeq = 4;
+  optional uint64 latestGroupSeq = 5;
+  optional uint64 followingFriendSeq = 6;
+  optional uint64 followingGroupSeq = 7;
+  optional string display = 8;
+}
+
+message RspSystemMsgAction {
+  optional RspHead head = 1;
+  optional string detail = 2;
+  optional uint32 type = 3;
+  optional string invalidDecided = 5;
+  optional uint32 remarkResult = 6;
+}
+
+message RspSystemMsgNew {
+  optional RspHead head = 1;
+  optional uint32 unreadFriendCount = 2;
+  optional uint32 unreadGroupCount = 3;
+  optional uint64 latestFriendSeq = 4;
+  optional uint64 latestGroupSeq = 5;
+  optional uint64 followingFriendSeq = 6;
+  optional uint64 followingGroupSeq = 7;
+  repeated StructMsg friendmsgs = 9;
+  repeated StructMsg groupmsgs = 10;
+  optional StructMsg ribbonFriend = 11;
+  optional StructMsg ribbonGroup = 12;
+  optional string display = 13;
+  optional string grpMsgDisplay = 14;
+  optional uint32 over = 15;
+  optional uint32 checktype = 20;
+  optional string gameNick = 100;
+  optional bytes undecidForQim = 101;
+  optional uint32 unReadCount3 = 102;
+  optional uint32 hasSuspiciousFlag = 103;
+}
+
+message RspSystemMsgRead {
+  optional RspHead head = 1;
+  optional uint32 type = 2;
+  optional uint32 checktype = 3;
+}
+
+message StructMsg {
+  optional uint32 version = 1;
+  optional uint32 type = 2;
+  optional uint64 seq = 3;
+  optional uint64 time = 4;
+  optional uint64 reqUin = 5;
+  optional uint32 unreadFlag = 6;
+  optional SystemMsg msg = 50;
+}
+
+message SystemMsg {
+  optional uint32 subType = 1;
+  optional string title = 2;
+  optional string describe = 3;
+  optional string additional = 4;
+  optional string source = 5;
+  optional string decided = 6;
+  optional uint32 srcId = 7;
+  optional uint32 subSrcId = 8;
+  repeated SystemMsgAction actions = 9;
+  optional uint64 groupCode = 10;
+  optional uint64 actionUin = 11;
+  optional uint32 groupMsgType = 12;
+  optional uint32 groupInviterRole = 13;
+  optional FriendInfo friendInfo = 14;
+  optional GroupInfo groupInfo = 15;
+  optional uint64 actorUin = 16;
+  optional string actorDescribe = 17;
+  optional string additionalList = 18;
+  optional uint32 relation = 19;
+  optional uint32 reqsubtype = 20;
+  optional uint64 cloneUin = 21;
+  optional uint64 discussUin = 22;
+  optional uint64 eimGroupId = 23;
+  optional MsgInviteExt inviteExtinfo = 24;
+  optional MsgPayGroupExt payGroupExtinfo = 25;
+  optional uint32 sourceFlag = 26;
+  optional bytes gameNick = 27;
+  optional bytes gameMsg = 28;
+  optional uint32 groupFlagext3 = 29;
+  optional uint64 groupOwnerUin = 30;
+  optional uint32 doubtFlag = 31;
+  optional bytes warningTips = 32;
+  optional bytes nameMore = 33;
+  optional bytes addtion = 34;
+  optional bytes transparentGroupNotify = 35;
+  optional int32 reqUinFaceid = 50;
+  optional string reqUinNick = 51;
+  optional string groupName = 52;
+  optional string actionUinNick = 53;
+  optional string qna = 54;
+  optional string detail = 55;
+  optional uint32 groupExtFlag = 57;
+  optional string actorUinNick = 58;
+  optional bytes picUrl = 59;
+  optional string cloneUinNick = 60;
+  optional bytes reqUinBusinessCard = 61;
+  optional bytes eimGroupIdName = 63;
+  optional bytes reqUinPreRemark = 64;
+  optional bytes actionUinQqNick = 65;
+  optional bytes actionUinRemark = 66;
+  optional uint32 reqUinGender = 67;
+  optional uint32 reqUinAge = 68;
+  optional uint32 c2CInviteJoinGroupFlag = 69;
+  optional uint32 cardSwitch = 101;
+}
+
+message SystemMsgAction {
+  optional string name = 1;
+  optional string result = 2;
+  optional uint32 action = 3;
+  optional SystemMsgActionInfo actionInfo = 4;
+  optional string detailName = 5;
+}
+
+message SystemMsgActionInfo {
+  optional uint32 type = 1;
+  optional uint64 groupCode = 2;
+  optional bytes sig = 3;
+  optional string msg = 50;
+  optional uint32 groupId = 51;
+  optional string remark = 52;
+  optional bool blacklist = 53;
+  optional AddFrdSNInfo addFrdSNInfo = 54;
+  optional uint32 reqMsgType = 55;
+}

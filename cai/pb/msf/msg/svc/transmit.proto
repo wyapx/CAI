@@ -1,0 +1,21 @@
+syntax = "proto2";
+package msf.msg.svc;
+
+// msf/msgsvc/msg_transmit.java
+
+import "cai/pb/msf/msg/comm/comm.proto";
+
+message PbMultiMsgItem {
+  optional string fileName = 1;
+  optional bytes buffer = 2;
+}
+
+message PbMultiMsgNew {
+  repeated comm.Msg msg = 1;
+}
+
+message PbMultiMsgTransmit {
+  repeated comm.Msg msg = 1;
+  repeated PbMultiMsgItem pbItemList = 2;
+}
+
