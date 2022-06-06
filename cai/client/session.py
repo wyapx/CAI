@@ -534,7 +534,7 @@ class Session:
 
                 data = await self.connection.read_bytes(length)
             except ConnectionError as e:
-                log.logger.exception(f"{self.uin} connection lost: {str(e)}")
+                log.logger.warning(f"{self.uin} connection lost: {str(e)}")
                 break
 
             try:
@@ -549,7 +549,7 @@ class Session:
                 )
                 # do not block receive
                 asyncio.create_task(self._handle_incoming_packet(packet))
-            except Exception as e:
+            except:
                 log.logger.exception("Unexpected error raised")
 
     @property
@@ -563,7 +563,7 @@ class Session:
             log.logger.exception(e)
 
     def dispatch_event(self, event: Event) -> None:
-        if event.type not in ("group_message", "private_message"):  # log filter
+        if event.type not in ("group_message", "private_message", "temp_message"):  # log filter
             log.logger.debug(f"Event {event.type} was triggered")
         for listener in self.listeners:
             asyncio.create_task(self._run_listener(listener, event))
@@ -591,7 +591,7 @@ class Session:
             )
 
         if isinstance(response, LoginSuccess):
-            log.logger.info(f"{self.nick}({self.uin}) 登录成功！")
+            log.logger.debug(f"{self.nick}({self.uin}) 登录成功！")
             await self._init()
             self.dispatch_event(BotOnlineEvent(
                 qq=self.uin
@@ -599,10 +599,10 @@ class Session:
             return response
         elif isinstance(response, NeedCaptcha):
             if response.verify_url:
-                log.logger.info(f"登录失败！请前往 {response.verify_url} 获取 ticket")
+                log.logger.debug(f"登录失败！请前往 {response.verify_url} 获取 ticket")
                 raise LoginSliderNeeded(response.uin, response.verify_url)
             elif response.captcha_image:
-                log.logger.info(f"登录失败！需要根据图片输入验证码")
+                log.logger.debug(f"登录失败！需要根据图片输入验证码")
                 raise LoginCaptchaNeeded(
                     response.uin, response.captcha_image, response.captcha_sign
                 )
@@ -613,7 +613,7 @@ class Session:
                     "Cannot get verify_url or captcha_image from the response!",
                 )
         elif isinstance(response, AccountFrozen):
-            log.logger.info("账号已被冻结！")
+            log.logger.debug("账号已被冻结！")
             raise LoginAccountFrozen(response.uin)
         elif isinstance(response, DeviceLocked):
             msg = "账号已开启设备锁！"
@@ -621,7 +621,7 @@ class Session:
                 msg += f"向手机{response.sms_phone}发送验证码"
             if response.verify_url:
                 msg += f"或前往 {response.verify_url} 扫码验证"
-            log.logger.info(msg + "。" + str(response.message))
+            log.logger.debug(msg + "。" + str(response.message))
 
             raise LoginDeviceLocked(
                 response.uin,
@@ -630,7 +630,7 @@ class Session:
                 response.message,
             )
         elif isinstance(response, TooManySMSRequest):
-            log.logger.info("验证码发送过于频繁！")
+            log.logger.debug("验证码发送过于频繁！")
             raise LoginSMSRequestError(response.uin)
         elif isinstance(response, DeviceLockLogin):
             if try_times:
@@ -669,7 +669,7 @@ class Session:
                 msg = packet_.start(2).string(2).execute()[0]
             else:
                 msg = ""
-            log.logger.info(f"未知的登录返回码 {response.status}! {msg}")
+            log.logger.debug(f"未知的登录返回码 {response.status}! {msg}")
             raise LoginException(
                 response.uin, response.status, "Unknown login status."
             )
