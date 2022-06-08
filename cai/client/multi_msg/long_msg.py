@@ -41,17 +41,17 @@ class MultiApplyResp(Command):
 async def build_multi_apply_up_pkg(
     client: "Session",
     group_id: int,
-    data_len: int,
+    data: bytes,
     data_md5: bytes,
-    bu_type: int,
+    bu_type: int
 ) -> Tuple[LongReqBody, MultiMsgApplyUpRsp]:
     body: MultiApplyResp = await client.send_unipkg_and_wait(
         "MultiMsg.ApplyUp",
         _encode_multi_req_body(
-            group_id, data_len, data_md5, bu_type
+            group_id, len(data), data_md5, bu_type
         ).SerializeToString(),
     )
-    LongReqBody(
+    return LongReqBody(
         subcmd=1,
         termType=5,
         platformType=9,
@@ -59,12 +59,12 @@ async def build_multi_apply_up_pkg(
             LongMsgUpReq(
                 msgType=3,
                 dstUin=client.uin,
-                msgContent=bytes(),  # todo:
+                msgContent=data,
                 storeType=2,
                 msgUkey=body.data.msgUkey,
             )
         ],
-    )
+    ), body.data
 
 
 async def handle_multi_resp_body(

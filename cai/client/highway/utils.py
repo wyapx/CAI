@@ -20,7 +20,7 @@ def calc_file_md5_and_length(*files: BinaryIO, bs=4096) -> Tuple[bytes, int]:
 
 
 def itoa(i: int) -> str:  # int to address(str)
-    return ".".join([str(p) for p in i.to_bytes(4, "little")])
+    return ".".join([str(p) for p in i.to_bytes(4, "little", signed=True)])
 
 
 def to_id(b_uuid: bytes) -> str:

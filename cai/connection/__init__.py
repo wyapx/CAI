@@ -140,6 +140,8 @@ class Connection:
             self.writer.write_eof()
 
     async def awrite(self, data: Union[bytes, Packet]):
+        if self._closed.is_set():
+            raise ConnectionError("Connection closed")
         self.writer.write(data)  # type: ignore
         await self.writer.drain()
 

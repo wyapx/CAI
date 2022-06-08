@@ -1,3 +1,5 @@
+from typing import List, Tuple, Sequence
+
 from cai.pb.im.cs.cmd0x388 import RspBody
 from cai.pb.highway.ptt_center import RspBody as VideoUpRsp
 
@@ -29,9 +31,13 @@ def decode_upload_image_resp(data: bytes) -> ImageUploadResponse:
     return ImageUploadResponse(
         isExists=False,
         fileId=pkg.fileid,
-        uploadAddr=[(itoa(a), p) for a, p in zip(pkg.up_ip, pkg.up_port)],
+        uploadAddr=parse_addr(pkg.up_ip, pkg.up_port),
         uploadKey=pkg.up_ukey,
     )
+
+
+def parse_addr(ip_list: Sequence[int], port_list: Sequence[int]) -> List[Tuple[str, int]]:
+    return [(itoa(a), p) for a, p in zip(ip_list, port_list)]
 
 
 def decode_upload_ptt_resp(data: bytes) -> UploadResponse:

@@ -34,7 +34,7 @@ class Element(abc.ABC):
 
 
 @dataclass
-class Node:
+class ForwardNode:
     from_uin: int
     nickname: str
     send_time: int
@@ -43,11 +43,14 @@ class Node:
 
 @dataclass
 class ForwardMessage:
-    nodes: List[Node]
+    from_group: int
+    res_id: str
+    file_name: str
+    nodes: List[ForwardNode]
 
     def add_node(self, from_uin: int, nickname: str, send_time: int, message: Sequence["Element"]):
         self.nodes.append(
-            Node(
+            ForwardNode(
                 from_uin,
                 nickname,
                 send_time,
@@ -200,7 +203,7 @@ class RichMsgElement(Element):
     service_id:
       case -1:
         json
-      case -2:
+      case 0:
         light_app
       default:
         xml

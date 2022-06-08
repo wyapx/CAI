@@ -1,19 +1,23 @@
 import random
 import asyncio
 import logging
+import secrets
 from hashlib import md5
+from io import BytesIO
 from typing import TYPE_CHECKING, List, Tuple, BinaryIO, Optional
 
 from cai.utils.image import decoder
 from cai.utils.tea import qqtea_encrypt
 from cai.pb.highway.protocol.highway_head_pb2 import highway_head
+from cai.pb.highway.ptt_center import PttShortVideoUploadResp
 
 from .encoders import encode_upload_img_req, encode_upload_voice_req, encode_video_upload_req
 from .frame import read_frame, write_frame
 from .utils import to_id, timeit, calc_file_md5_and_length
-from ..message_service.models import ImageElement, VoiceElement, VideoElement
-from .decoders import decode_upload_ptt_resp, decode_upload_image_resp, decode_video_upload_resp
-from ...pb.highway.ptt_center import PttShortVideoUploadResp
+from ..message_service.models import ImageElement, VoiceElement, VideoElement, ForwardNode, ForwardMessage
+from .decoders import decode_upload_ptt_resp, decode_upload_image_resp, decode_video_upload_resp, parse_addr
+from ..multi_msg.forward import prepare
+from ..multi_msg.long_msg import build_multi_apply_up_pkg
 
 if TYPE_CHECKING:
     from cai.client.session import Session
@@ -59,7 +63,7 @@ class HighWaySession:
             raise KeyError("session key not set, try again later?")
         return qqtea_encrypt(ext, self._session_key)
 
-    async def _upload_controller(
+    async def upload_controller(
         self,
         *files: BinaryIO,
         cmd_id: int,
@@ -71,13 +75,11 @@ class HighWaySession:
             addrs = self._session_addr_list
         for addr in addrs:
             try:
-                t, d = await timeit(
-                    self.bdh_uploader(
-                        b"PicUp.DataUp", addr, list(files), cmd_id, ticket, ext
-                    )
+                sec, data = await timeit(
+                    self._bdh_uploader(b"PicUp.DataUp", addr, list(files), cmd_id, ticket, ext)
                 )
-                self.logger.info("upload complete, use %fms" % (t * 1000))
-                return d
+                self.logger.info("upload complete, use %fms" % (sec * 1000))
+                return data
             except TimeoutError:
                 self.logger.error(f"server {addr[0]}:{addr[1]} timeout")
                 continue
@@ -103,12 +105,7 @@ class HighWaySession:
         elif not ret.isExists:
             self.logger.debug("file not found, uploading...")
 
-            await self._upload_controller(
-                file,
-                cmd_id=2,  # send to group
-                ticket=ret.uploadKey,
-                addrs=ret.uploadAddr
-            )
+            await self.upload_controller(file, cmd_id=2, ticket=ret.uploadKey, addrs=ret.uploadAddr)
 
         if ret.hasMetaData:
             image_type = ret.fileType
@@ -136,12 +133,7 @@ class HighWaySession:
         if not (self._session_key and self._session_sig):
             self._decode_bdh_session()
         ret = decode_upload_ptt_resp(
-            await self._upload_controller(
-                file,
-                cmd_id=29,  # send to group
-                ticket=self._session_sig,
-                ext=ext,
-            )
+            await self.upload_controller(file, cmd_id=29, ticket=self._session_sig, ext=ext)
         )
         if ret.resultCode:
             raise ConnectionError(ret.resultCode, ret.message)
@@ -179,8 +171,9 @@ class HighWaySession:
 
             if not (self._session_key and self._session_sig):
                 self._decode_bdh_session()
-            ext_data = await self._upload_controller(
-                thumb, file,
+            ext_data = await self.upload_controller(
+                thumb,
+                file,
                 cmd_id=25,
                 ticket=self._session_sig,
                 ext=self._encrypt_ext(req.PttShortVideoUpload_Req.SerializeToString())
@@ -201,7 +194,25 @@ class HighWaySession:
             thumb_md5
         )
 
-    async def bdh_uploader(
+    async def upload_forward_msg(self, forward: List[ForwardNode], gid: int) -> ForwardMessage:
+        data, fmd5 = prepare(forward, 0, gid, random.randint(3000000, 80000000))
+        body, resp = await build_multi_apply_up_pkg(self._client, gid, data, fmd5, 2)
+        if resp.result:
+            raise ConnectionError(resp.result)
+        await self.upload_controller(
+            BytesIO(body.SerializeToString()),
+            cmd_id=27,
+            ticket=resp.msgSig,
+            addrs=parse_addr(resp.uint32UpIp, resp.uint32UpPort)
+        )
+        return ForwardMessage(
+            gid,
+            resp.msgResid,
+            secrets.token_hex(32),
+            forward
+        )
+
+    async def _bdh_uploader(
         self,
         cmd: bytes,
         addr: Tuple[str, int],
