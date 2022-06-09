@@ -150,7 +150,7 @@ def parse_elements(elems: Sequence[Elem], ptt: Optional[Ptt]) -> List[Element]:
                 content = zlib.decompress(elem.light_app.data[1:])
             else:
                 content = elem.light_app.data[1:]
-            return [RichMsgElement(content, -2)]
+            return [RichMsgElement(content, 0)]
         # TextElemDecoder
         elif elem.HasField("face"):
             res.append(FaceElement(elem.face.index))
