@@ -122,7 +122,12 @@ class HighWaySession:
             height=h,
             md5=fmd5,
             filetype=image_type,
-            url=f"https://gchat.qpic.cn/gchatpic_new/1/0-0-{fmd5.hex().upper()}/0?term=2",
+            url="https://gchat.qpic.cn/gchatpic_new/{uin}/{gid}-{file_id}-{fmd5}/0?term=2".format(
+                uin=self._client.uin,
+                gid=gid,
+                file_id=ret.fileId,
+                fmd5=fmd5.hex().upper()
+            )
         )
 
     async def upload_voice(self, file: BinaryIO, gid: int) -> VoiceElement:

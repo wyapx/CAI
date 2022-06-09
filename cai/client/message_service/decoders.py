@@ -8,6 +8,7 @@ This module is used to decode message protobuf.
 .. _LICENSE:
     https://github.com/cscs181/CAI/blob/master/LICENSE
 """
+import re
 import zlib
 from itertools import chain
 from typing import Dict, List, Callable, Optional, Sequence
@@ -185,7 +186,9 @@ def parse_elements(elems: Sequence[Elem], ptt: Optional[Ptt]) -> List[Element]:
                         width=elem.custom_face.width,
                         height=elem.custom_face.height,
                         md5=elem.custom_face.md5,
+                        id=elem.custom_face.file_id,
                         url="https://gchat.qpic.cn" + elem.custom_face.orig_url,
+                        filetype=elem.custom_face.image_type,
                         is_emoji=reserve.imageBizType != 0
                     )
                 )
@@ -197,9 +200,11 @@ def parse_elements(elems: Sequence[Elem], ptt: Optional[Ptt]) -> List[Element]:
                         width=elem.custom_face.width,
                         height=elem.custom_face.height,
                         md5=elem.custom_face.md5,
+                        id=elem.custom_face.file_id,
                         url="https://gchat.qpic.cn/gchatpic_new/0/0-0-"
                         + elem.custom_face.md5.hex().upper()
                         + "/0",
+                        filetype=elem.custom_face.image_type,
                         is_emoji=reserve.imageBizType != 0
                     )
                 )
