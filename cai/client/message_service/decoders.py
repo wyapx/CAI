@@ -8,7 +8,6 @@ This module is used to decode message protobuf.
 .. _LICENSE:
     https://github.com/cscs181/CAI/blob/master/LICENSE
 """
-import re
 import zlib
 from itertools import chain
 from typing import Dict, List, Callable, Optional, Sequence
@@ -18,7 +17,7 @@ from cai.client.events import Event
 from cai.pb.msf.msg.comm import Msg
 from cai.pb.im.msg.msg_body import Ptt, Elem
 from cai.pb.im.msg.obj_msg import ObjMsg
-from cai.pb.im.msg.resv import CustomFaceExtPb
+from cai.pb.im.msg.resv import CustomFaceExtPb, NotOnlineImageExtPb
 from cai.pb.im.msg.service.comm_elem import (
     MsgElemInfo_servtype2,
     MsgElemInfo_servtype3,
@@ -210,6 +209,7 @@ def parse_elements(elems: Sequence[Elem], ptt: Optional[Ptt]) -> List[Element]:
                 )
         # PictureElemDecoder
         elif elem.HasField("not_online_image"):
+            reserve = NotOnlineImageExtPb.ResvAttr.FromString(elem.not_online_image.pb_reserve)
             if elem.not_online_image.orig_url:
                 res.append(
                     ImageElement(
@@ -220,8 +220,11 @@ def parse_elements(elems: Sequence[Elem], ptt: Optional[Ptt]) -> List[Element]:
                         width=elem.not_online_image.pic_width,
                         height=elem.not_online_image.pic_height,
                         md5=elem.not_online_image.pic_md5,
+                        id=elem.not_online_image.file_id,
                         url="https://c2cpicdw.qpic.cn"
                         + elem.not_online_image.orig_url,
+                        filetype=elem.not_online_image.img_type,
+                        is_emoji=reserve.imageBizType != 0
                     )
                 )
             elif (
@@ -237,12 +240,15 @@ def parse_elements(elems: Sequence[Elem], ptt: Optional[Ptt]) -> List[Element]:
                         width=elem.not_online_image.pic_width,
                         height=elem.not_online_image.pic_height,
                         md5=elem.not_online_image.pic_md5,
+                        id=elem.not_online_image.file_id,
                         url="https://c2cpicdw.qpic.cn/offpic_new/0/"
                         + (
                             elem.not_online_image.res_id
                             or elem.not_online_image.download_path
                         ).decode("utf-8")
                         + "/0",
+                        filetype=elem.not_online_image.img_type,
+                        is_emoji=reserve.imageBizType != 0
                     )
                 )
         elif elem.HasField("open_qq_data"):
