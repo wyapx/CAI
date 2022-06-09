@@ -368,31 +368,27 @@ class Session:
             server (Optional[SsoServer], optional): Which server you want to connect to. Defaults to None.
         """
 
+        log.network.warning("reconnecting...")
         if not change_server and self._connection:
-            log.network.warning("reconnecting...")
-            try:
-                await self._connection.reconnect()
-            except ConnectionError:
-                log.network.warning("reconnect fail. retrying...")
-                await self.reconnect(True, server)
+            await self._connection.reconnect()
             self._start_receiver()
-            log.network.info("reconnected")
-            return
-
-        exclude = (
-            [self._connection.host]
-            if change_server and self._connection
-            else []
-        )
-        _server = server or await get_sso_server(
-            cache=False, cache_server_list=True, exclude=exclude
-        )
-        await self.disconnect()
-        await self.connect(_server)
+        else:
+            exclude = (
+                [self._connection.host]
+                if change_server and self._connection
+                else []
+            )
+            _server = server or await get_sso_server(
+                cache=False, cache_server_list=True, exclude=exclude
+            )
+            await self.disconnect()
+            await self.connect(_server)
+        log.network.info("reconnected")
 
     async def reconnect_and_login(
         self, change_server: bool = False, server: Optional[SsoServer] = None
     ) -> None:
+        self._receive_store.cancel_all()
         # Todo: retry after reconnect fail
         await self.reconnect(change_server=change_server, server=server)
         # FIXME: register reason msfByNetChange?
