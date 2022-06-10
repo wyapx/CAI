@@ -232,6 +232,7 @@ class GroupMember(JsonableDataclass):
         "special_title",
         "special_title_expire_time",
         "shutup_timestamp",
+        "vec_name",
     )
     member_uin: int
     age: int
@@ -252,7 +253,7 @@ class GroupMember(JsonableDataclass):
     special_title_expire_time: int
     shutup_timestamp: int
 
-    _client: "Session" = field(repr=False, compare=False)
+    vec_name: bytes = field(repr=False)
     _group: Group = field(repr=False)
 
     def __eq__(self, o: object) -> bool:
@@ -276,3 +277,10 @@ class GroupMember(JsonableDataclass):
     @property
     def group(self) -> Group:
         return self._group
+
+    @property
+    def member_card(self) -> str:
+        """Return display name on group"""
+        if self.vec_name:
+            return self.vec_name.decode()
+        return self.nick

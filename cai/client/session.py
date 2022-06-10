@@ -1420,7 +1420,7 @@ class Session:
                 group_list.extend(
                     map(
                         lambda x: GroupMember.from_dict(
-                            {**x.dict(), "_client": self, "_group": group}
+                            {**x.dict(), "_group": group}
                         ),
                         response.response.troop_member,
                     )
