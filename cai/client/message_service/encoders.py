@@ -43,7 +43,7 @@ def _build_image_elem(
         file_path=e.filename,
         image_type=e.filetype,
         source=200,
-        origin=1,
+        origin=1 if not e.is_emoji else 0,
         size=e.size,
         md5=e.md5,
         show_len=0,
