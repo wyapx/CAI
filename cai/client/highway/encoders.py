@@ -45,7 +45,7 @@ def encode_upload_img_req(
                 src_term=5,
                 platform_type=9,
                 bu_type=1,
-                pic_type=info.pic_type.value,
+                pic_type=info.pic_type,
                 pic_width=info.width,
                 pic_height=info.height,
                 build_ver=b"8.8.50.2324",

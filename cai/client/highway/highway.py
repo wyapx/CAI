@@ -69,14 +69,15 @@ class HighWaySession:
         cmd_id: int,
         ticket: bytes,
         ext=None,
-        addrs: List[Tuple[str, int]] = None
+        addrs: List[Tuple[str, int]] = None,
+        bs=8192
     ) -> Optional[bytes]:
         if not addrs:
             addrs = self._session_addr_list
         for addr in addrs:
             try:
                 sec, data = await timeit(
-                    self._bdh_uploader(b"PicUp.DataUp", addr, list(files), cmd_id, ticket, ext)
+                    self._bdh_uploader(b"PicUp.DataUp", addr, list(files), cmd_id, ticket, ext, block_size=bs)
                 )
                 self.logger.info("upload complete, use %fms" % (sec * 1000))
                 return data
@@ -105,7 +106,7 @@ class HighWaySession:
         elif not ret.isExists:
             self.logger.debug("file not found, uploading...")
 
-            await self.upload_controller(file, cmd_id=2, ticket=ret.uploadKey, addrs=ret.uploadAddr)
+            await self.upload_controller(file, cmd_id=2, ticket=ret.uploadKey, addrs=ret.uploadAddr, bs=1048576)
 
         if ret.hasMetaData:
             image_type = ret.fileType
