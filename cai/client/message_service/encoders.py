@@ -76,12 +76,14 @@ def _build_rich_msg(data: bytes, service_id: int) -> Elem:
         )
 
 
-def _fill_forward_msg_tpl(res_id: str, filename: str, msg_len: int) -> bytes:
+def _fill_forward_msg_tpl(res_id: str, filename: str, msg_len: int, brief: str) -> bytes:
     return f'<?xml version=\'1.0\' encoding=\'UTF-8\' standalone=\'yes\' ?>' \
-           f'<msg serviceID="35" templateID="1" action="viewMultiMsg" brief="[聊天记录]" m_resid="{res_id}" m_fileName="{filename}" tSum="3" sourceMsgId="0" url="" flag="3" adverSign="0" multiMsgFlag="0">' \
+           f'<msg serviceID="35" templateID="1" action="viewMultiMsg" brief="{brief}" m_resid="{res_id}" m_fileName="{filename}" tSum="3" sourceMsgId="0" url="" flag="3" adverSign="0" multiMsgFlag="0">' \
            f'<item layout="1" advertiser_id="0" aid="0">' \
-           f'<title size="34" maxLines="2" lineSpace="12">群聊的聊天记录</title><title size="26" color="#777700" maxLines="2" lineSpace="12">点击查看聊天记录</title>' \
-           f'<hr hidden="false" style="0" /><summary size="26" color="#777777">查看{msg_len}条转发消息</summary>' \
+           f'<title size="34" maxLines="2" lineSpace="12">群聊的聊天记录</title>' \
+           f'<title size="26" color="#777700" maxLines="2" lineSpace="12">点击查看聊天记录</title>' \
+           f'<hr hidden="false" style="0" />' \
+           f'<summary size="26" color="#777777">查看{msg_len}条转发消息</summary>' \
            f'</item><source name="聊天记录？" icon="" action="" appid="-1" /></msg>'.encode()
 
 
@@ -208,7 +210,10 @@ def build_msg(elements: Sequence[models.Element]) -> MsgBody:
             )
         elif isinstance(e, models.ForwardMessage):
             ret.append(
-                _build_rich_msg(_fill_forward_msg_tpl(e.res_id, e.file_name, len(e.nodes)), 35)
+                _build_rich_msg(
+                    _fill_forward_msg_tpl(e.res_id, e.file_name, len(e.nodes), e.brief),
+                    35
+                )
             )
         elif isinstance(e, models.CustomDataElement):
             ret.append(

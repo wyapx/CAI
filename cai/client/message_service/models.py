@@ -42,11 +42,12 @@ class ForwardNode:
 
 
 @dataclass
-class ForwardMessage:
+class ForwardMessage(Element):
     from_group: int
     res_id: str
     file_name: str
     nodes: List[ForwardNode]
+    brief: Optional[str] = "[聊天记录]"
 
     def add_node(self, from_uin: int, nickname: str, send_time: int, message: Sequence["Element"]):
         self.nodes.append(
@@ -57,6 +58,10 @@ class ForwardMessage:
                 message
             )
         )
+
+    @property
+    def type(self):
+        return "forward_message"
 
 
 @dataclass

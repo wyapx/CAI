@@ -10,6 +10,7 @@ This module is used to decode message protobuf.
 """
 import zlib
 from itertools import chain
+from xml.dom import minidom
 from typing import Dict, List, Callable, Optional, Sequence
 
 from cai.log import logger
@@ -44,6 +45,7 @@ from .models import (
     FlashImageElement,
     SmallEmojiElement,
     GroupFileElement,
+    ForwardMessage,
 )
 from ..events.common import PrivateMessage, GroupMessage, TempMessage
 
@@ -139,12 +141,26 @@ def parse_elements(elems: Sequence[Elem], ptt: Optional[Ptt]) -> List[Element]:
                 content = zlib.decompress(elem.rich_msg.template_1[1:])
             else:
                 content = elem.rich_msg.template_1[1:]
-            return [
-                RichMsgElement(
-                    content,
-                    elem.rich_msg.service_id if content[0] == 60 else -1,
-                )
-            ]
+
+            if elem.rich_msg.service_id == 35:  # forward msg
+                root: minidom.Document = minidom.parseString(content)
+                msg_elem: minidom.Element = root.getElementsByTagName("msg")[0]
+                return [
+                    ForwardMessage(
+                        0,
+                        msg_elem.getAttribute("m_resid"),
+                        msg_elem.getAttribute("m_fileName"),
+                        [],
+                        msg_elem.getAttribute("brief")
+                    )
+                ]
+            else:
+                return [
+                    RichMsgElement(
+                        content,
+                        elem.rich_msg.service_id if content[0] == 60 else -1,
+                    )
+                ]
         elif elem.HasField("light_app"):
             if elem.light_app.data[0]:
                 content = zlib.decompress(elem.light_app.data[1:])
