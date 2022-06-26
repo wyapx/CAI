@@ -36,9 +36,8 @@ class JPEGDecoder(BaseDecoder):
             data = fio.read(
                 int.from_bytes(fio.read(2), "big") - 2
             )
-            if btype == b"\xc0":
+            if btype[0] in (192, 193, 194):  # C0-C2
                 depth, height, width, _ = struct.unpack("!BHHB", data[:6])
-                print(width, height)
                 return ImageInfo("jpg", width, height, depth)
 
 
