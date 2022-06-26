@@ -51,7 +51,7 @@ def _build_image_elem(
         pb_reserve=CustomFaceExtPb.ResvAttr(
             imageBizType=1 if e.is_emoji else 0,
             customfaceType=0,
-            emojiPackageid=0 if e.filename.endswith(".gif") else None,
+            emojiPackageid=0 if e.is_emoji else None,
             textSummary=("[动画表情]" if e.is_emoji else "[图片]").encode(),
             emojiFrom=0,
             source=6 if e.is_emoji else 2
@@ -108,7 +108,7 @@ def build_msg(elements: Sequence[models.Element]) -> MsgBody:
                 Elem(text=PlainText(str="[闪照]请使用新版手机QQ查看".encode()))
             )
         elif isinstance(e, models.ImageElement):
-            if e.filename.endswith(".gif"):
+            if e.filetype >= 2000:
                 e.is_emoji = True
             ret.append(Elem(custom_face=_build_image_elem(e)))
         elif isinstance(e, models.AtElement):
@@ -134,9 +134,13 @@ def build_msg(elements: Sequence[models.Element]) -> MsgBody:
                 _build_rich_msg(e.content, e.service_id)
             )
         elif isinstance(e, models.ShakeElement):
-            ret.append(Elem(shake_window=ShakeWindow(type=e.stype, uin=e.uin)))
-            ret.append(  # fallback info
-                Elem(text=PlainText(str="[窗口抖动]请使用新版手机QQ查看".encode()))
+            ret.append(
+                Elem(
+                    shake_window=ShakeWindow(
+                        type=e.stype,
+                        uin=e.uin
+                    )
+                )
             )
         elif isinstance(e, models.FaceElement):
             ret.append(
