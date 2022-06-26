@@ -9,7 +9,7 @@
 import asyncio
 import hashlib
 import random
-from typing import Union, BinaryIO, Optional, Sequence, Tuple, Dict, NoReturn
+from typing import Union, BinaryIO, Optional, Sequence, Tuple, Dict, NoReturn, List
 
 from cai import log
 from cai.client import Session, OnlineStatus
@@ -24,6 +24,8 @@ from cai.client.message_service.models import (
     ImageElement,
     VoiceElement,
     VideoElement,
+    ForwardNode,
+    ForwardMessage,
 )
 
 from .group import Group as _Group
@@ -163,6 +165,9 @@ class Client(_Login, _Friend, _Group, _Events):
 
     async def upload_video(self, group_id: int, file: BinaryIO, thumb: BinaryIO) -> VideoElement:
         return await self._highway_session.upload_video(file, thumb, group_id)
+
+    async def upload_forward_msg(self, group_id: int, nodes: List[ForwardNode]) -> ForwardMessage:
+        return await self._highway_session.upload_forward_msg(nodes, group_id)
 
     async def close(self) -> NoReturn:
         """Stop Session"""
