@@ -65,7 +65,7 @@ class GroupNudgeEvent(_GroupGeneralGrayTipEvent):
 
     @property
     def action_text(self) -> str:
-        return self.template_params["alt_str1"]
+        return self.template_params.get("action_str", self.template_params.get("alt_str1", ""))
 
     @property
     def action_img(self) -> str:
