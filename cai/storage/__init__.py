@@ -11,6 +11,7 @@ This module is used to manage application storage.
 import os
 import shutil
 from pathlib import Path
+from typing import Union
 
 from .utils import user_cache_dir, user_config_dir
 
@@ -23,6 +24,7 @@ class Storage:
     app_dir: Path = Path(os.getenv(f"{app_name}_APP_DIR", _default_app_dir))
     app_dir.mkdir(parents=True, exist_ok=True)
     if not app_dir.is_dir():
+        app_dir.unlink(missing_ok=True)
         raise RuntimeError(
             f"Application directory {app_dir} is not a directory!"
         )
@@ -34,6 +36,7 @@ class Storage:
     )
     cache_dir.mkdir(parents=True, exist_ok=True)
     if not cache_dir.is_dir():
+        cache_dir.unlink(missing_ok=True)
         raise RuntimeError(
             f"Application Cache directory {cache_dir} is not a directory!"
         )
@@ -58,3 +61,27 @@ class Storage:
                 shutil.rmtree(path)
             else:
                 path.unlink()
+
+
+def change_config_dir(path: Union[Path, str]):
+    if isinstance(path, str):
+        path = Path(path)
+    path.mkdir(parents=True, exist_ok=True)
+    if not path.is_dir():
+        path.unlink(missing_ok=True)
+        raise RuntimeError(
+            f"Application directory {path} is not a directory!"
+        )
+    Storage.app_dir = path
+
+
+def change_cache_dir(path: Union[Path, str]):
+    if isinstance(path, str):
+        path = Path(path)
+    path.mkdir(parents=True, exist_ok=True)
+    if not path.is_dir():
+        path.unlink(missing_ok=True)
+        raise RuntimeError(
+            f"Application Cache directory {path} is not a directory!"
+        )
+    Storage.cache_dir = path
