@@ -314,7 +314,7 @@ class Session:
         """
         if self.connected:
             raise RuntimeError("Already connected to the server")
-        if self.closed:
+        elif self.closed:
             self._closed.clear()  # reopen
         log.network.debug("Getting Sso server")
         _server = server or await get_sso_server()
@@ -342,6 +342,7 @@ class Session:
             qq=self.uin,
             reconnect=self._reconnect
         ))
+        task.cancel()
         if self._reconnect:
             log.network.warning("receiver stopped, try to reconnect")
             self._reconnect_times += 1
@@ -349,7 +350,6 @@ class Session:
         else:
             log.network.warning("receiver stopped")
             asyncio.create_task(self.close())
-        task.cancel()
 
     async def disconnect(self) -> None:
         """Disconnect if already connected to the server."""
@@ -368,7 +368,7 @@ class Session:
             server (Optional[SsoServer], optional): Which server you want to connect to. Defaults to None.
         """
 
-        log.network.warning("reconnecting...")
+        log.network.debug("reconnecting...")
         if not change_server and self._connection:
             await self._connection.reconnect()
             self._start_receiver()
@@ -383,7 +383,7 @@ class Session:
             )
             await self.disconnect()
             await self.connect(_server)
-        log.network.info("reconnected")
+        log.network.network("reconnected")
 
     async def reconnect_and_login(
         self, change_server: bool = False, server: Optional[SsoServer] = None
@@ -396,12 +396,14 @@ class Session:
             await self._init(drop_offline_msg=False)
         except asyncio.TimeoutError:
             log.network.warning("register failed, trying to re-login")
-            await self.reconnect(change_server=True, server=server)
+            await self.reconnect(change_server=change_server, server=server)
             await self.login()
         if self.connected:
             self.dispatch_event(BotOnlineEvent(
                 qq=self.uin
             ))
+        else:
+            log.network.error("reconnect fail")
 
     async def close(self) -> None:
         """Close the session and logout."""
@@ -411,6 +413,7 @@ class Session:
         # logout
         if (
             self.connected
+            and self._connection.closed
             and self.status
             and self.status != OnlineStatus.Offline
         ):
