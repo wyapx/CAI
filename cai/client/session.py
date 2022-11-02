@@ -383,7 +383,7 @@ class Session:
             )
             await self.disconnect()
             await self.connect(_server)
-        log.network.network("reconnected")
+        log.network.debug("reconnected")
 
     async def reconnect_and_login(
         self, change_server: bool = False, server: Optional[SsoServer] = None
