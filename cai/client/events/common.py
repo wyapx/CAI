@@ -6,6 +6,7 @@ from .base import Event, BotEvent
 
 if TYPE_CHECKING:
     from ..message_service.models import Element
+    from ..status_service.jce import InstanceInfo
 
 
 @dataclass
@@ -30,6 +31,17 @@ class BotOnlineEvent(BotEvent):
 class BotOfflineEvent(BotEvent):
     qq: int
     reconnect: bool
+
+
+@dataclass
+class OtherClientChangedEvent(BotEvent):
+    is_login: bool
+    app_id: int
+    client_type: int
+    platform: int
+    title: str
+    description: str
+    instance_list: List["InstanceInfo"]
 
 
 @dataclass

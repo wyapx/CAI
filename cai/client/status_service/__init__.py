@@ -17,7 +17,6 @@ from jce import types
 
 from cai.log import logger
 from cai.utils.binary import Packet
-from cai.settings.protocol import ApkInfo
 from cai.settings.device import DeviceInfo
 from cai.utils.jce import RequestPacketVersion3
 from cai.pb.im.oidb.cmd0x769 import ReqBody, ConfigSeq
@@ -27,6 +26,7 @@ from cai.client.packet import (
     CSsoDataPacket,
     IncomingPacket,
 )
+from cai.client.events.common import OtherClientChangedEvent
 
 from .jce import SvcReqRegister, ResponseMSFForceOffline
 from .command import (
@@ -36,6 +36,7 @@ from .command import (
     SvcRegisterResponse,
     MSFForceOfflineError,
     MSFForceOfflineCommand,
+    SvcLoginNotifyRequest
 )
 
 if TYPE_CHECKING:
@@ -148,12 +149,12 @@ def _encode_svc_request(
         nettype=bytes([1]),
         reg_type=bytes(1)
         if reg_push_reason
-        in (
-            RegPushReason.AppRegister,
-            RegPushReason.FillRegProxy,
-            RegPushReason.CreateDefaultRegInfo,
-            RegPushReason.SetOnlineStatus,
-        )
+           in (
+               RegPushReason.AppRegister,
+               RegPushReason.FillRegProxy,
+               RegPushReason.CreateDefaultRegInfo,
+               RegPushReason.SetOnlineStatus,
+           )
         else bytes([1]),
         guid=device.guid,
         dev_name=device.model,
@@ -313,6 +314,33 @@ async def handle_register_response(
     return response
 
 
+async def handle_login_notify(
+    client: "Session", packet: IncomingPacket
+) -> SvcLoginNotifyRequest:
+    request = SvcLoginNotifyRequest.decode_response(
+        packet.uin,
+        packet.seq,
+        packet.ret_code,
+        packet.command_name,
+        packet.data,
+    )
+    if hasattr(request, "message"):
+        msg = request.message
+
+        client.dispatch_event(
+            OtherClientChangedEvent(
+                is_login=msg.c_status[0] == 1,
+                app_id=msg.iapp_id,
+                client_type=msg.iclient_type,
+                platform=msg.iplatform,
+                title=msg.str_title,
+                description=msg.str_info,
+                instance_list=msg.vec_instance_list
+            )
+        )
+    return request
+
+
 def encode_force_offline_response(
     seq: int,
     session_id: bytes,
@@ -418,6 +446,7 @@ __all__ = [
     "encode_set_status",
     "handle_register_response",
     "handle_request_offline",
+    "handle_login_notify",
     "OnlineStatus",
     "RegPushReason",
     "SvcRegisterResponse",

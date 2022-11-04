@@ -226,3 +226,24 @@ class ResponseMSFForceOffline(JceStruct):
     uin: types.INT64 = JceField(jce_id=0)
     seq_no: types.INT64 = JceField(jce_id=1)
     c: types.BYTE = JceField(jce_id=2)
+
+
+class InstanceInfo(JceStruct):
+    iapp_id: types.INT32 = JceField(0, jce_id=0)
+    c_tablet: types.BYTE = JceField(bytes(), jce_id=1)
+    iplatform: types.INT64 = JceField(0, jce_id=2)
+    iproduct_type: types.INT64 = JceField(0, jce_id=3)
+    iclient_type: types.INT64 = JceField(0, jce_id=4)
+    device_name: types.BYTES = JceField(bytes(), jce_id=5)
+
+
+class SvcReqMSFLoginNotify(JceStruct):
+    iapp_id: types.INT64 = JceField(0, jce_id=0)
+    c_status: types.BYTE = JceField(bytes(), jce_id=1)
+    c_tablet: types.BYTE = JceField(bytes(), jce_id=2)
+    iplatform: types.INT64 = JceField(0, jce_id=3)
+    str_title: types.STRING = JceField("", jce_id=4)
+    str_info: types.STRING = JceField("", jce_id=5)
+    iproduct_type: types.INT64 = JceField(0, jce_id=6)
+    iclient_type: types.INT64 = JceField(0, jce_id=7)
+    vec_instance_list: types.LIST[InstanceInfo] = JceField([], jce_id=8)

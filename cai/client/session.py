@@ -75,6 +75,7 @@ from .status_service import (
     encode_set_status,
     handle_request_offline,
     handle_register_response,
+    handle_login_notify,
 )
 from .friendlist import (
     TroopListFail,
@@ -121,6 +122,7 @@ HANDLERS: Dict[str, HT] = {
     "StatSvc.register": handle_register_response,
     "StatSvc.SetStatusFromClient": handle_register_response,
     "StatSvc.ReqMSFOffline": handle_request_offline,
+    "StatSvc.SvcReqMSFLoginNotify": handle_login_notify,
     "ConfigPushSvc.PushReq": handle_config_push_request,
     "Heartbeat.Alive": handle_heartbeat,
     "friendlist.GetFriendListReq": handle_friend_list,
@@ -133,7 +135,7 @@ HANDLERS: Dict[str, HT] = {
     "OnlinePush.PbPushDisMsg": handle_push_msg,
     "OnlinePush.PbC2CMsgSync": handle_c2c_sync,
     "OnlinePush.PbPushC2CMsg": handle_push_msg,
-    # "OnlinePush.PbPushBindUinGroupMsg": handle_push_msg,  # sub account
+    # "OnlinePush.PbPushBindUinGroupMsg": handle_push_msg,  # subaccount
     "MultiMsg.ApplyUp": handle_multi_resp_body,
     "OnlinePush.ReqPush": handle_req_push,
     "OnlinePush.PbPushTransMsg": handle_push_trans_msg
@@ -238,7 +240,7 @@ class Session:
         """Only available after login.
 
         Returns:
-            Optional[str]: nick name of the session account.
+            Optional[str]: nickname of the session account.
         """
         return self._nick
 

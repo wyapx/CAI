@@ -15,7 +15,25 @@ from dataclasses import dataclass
 from cai.client.command import Command
 from cai.utils.jce import RequestPacketVersion2, RequestPacketVersion3
 
-from .jce import SvcRespRegister, RequestMSFForceOffline
+from .jce import SvcRespRegister, RequestMSFForceOffline, SvcReqMSFLoginNotify
+
+
+@dataclass
+class SvcLoginNotifyRequest(Command):
+    message: Optional[SvcReqMSFLoginNotify]
+
+    @classmethod
+    def decode_response(
+        cls, uin: int, seq: int, ret_code: int, command_name: str, data: bytes
+    ) -> "SvcLoginNotifyRequest":
+        if ret_code or not data:
+            return cls(uin, seq, ret_code, command_name, None)
+        else:
+            req_pkg = RequestPacketVersion2.decode(data)
+            svc_login_notify = SvcReqMSFLoginNotify.decode(
+                req_pkg.data["SvcReqMSFLoginNotify"]["QQService.SvcReqMSFLoginNotify"][1:-1]
+            )
+            return cls(uin, seq, ret_code, command_name, svc_login_notify)
 
 
 @dataclass
