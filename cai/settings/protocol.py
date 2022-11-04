@@ -32,8 +32,8 @@ class ApkInfo(NamedTuple):
 ANDROID_PHONE = ApkInfo(
     apk_id="com.tencent.mobileqq",
     app_id=16,
-    sub_app_id=537066738,
-    version="8.5.0",
+    sub_app_id=537138832,
+    version="8.9.15.9425",
     build_time=1607689988,
     apk_sign=bytes(
         [
@@ -55,17 +55,17 @@ ANDROID_PHONE = ApkInfo(
             0x8D,
         ]
     ),
-    sdk_version="6.0.0.2454",
-    sso_version=15,
+    sdk_version="6.0.0.2494",
+    sso_version=16,
     bitmap=184024956,
     main_sigmap=34869472,
     sub_sigmap=0x10400,
 )
 ANDROID_WATCH = ApkInfo(
-    apk_id="com.tencent.mobileqq",
+    apk_id="com.tencent.qqlite",
     app_id=16,
-    sub_app_id=537061176,
-    version="8.2.7",
+    sub_app_id=537064446,
+    version="2.0.5",
     build_time=1571193922,
     apk_sign=bytes(
         [
@@ -87,9 +87,9 @@ ANDROID_WATCH = ApkInfo(
             0x8D,
         ]
     ),
-    sdk_version="6.0.0.2413",
+    sdk_version="6.0.0.236",
     sso_version=5,
-    bitmap=184024956,
+    bitmap=16252796,
     main_sigmap=34869472,
     sub_sigmap=0x10400,
 )
@@ -126,10 +126,10 @@ IPAD = ApkInfo(
     sub_sigmap=66560,
 )
 MACOS = ApkInfo(
-    apk_id="com.tencent.minihd.qq",
+    apk_id="com.tencent.qq",
     app_id=16,
-    sub_app_id=537064315,
-    version="5.8.9",
+    sub_app_id=537119282,
+    version="6.7.9",
     build_time=1595836208,
     apk_sign=bytes(
         [
@@ -151,7 +151,7 @@ MACOS = ApkInfo(
             199,
         ]
     ),
-    sdk_version="6.0.0.2433",
+    sdk_version="6.2.0.1023",
     sso_version=12,
     bitmap=150470524,
     main_sigmap=1970400,
