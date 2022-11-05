@@ -10,6 +10,7 @@ This module is used to build and handle status service related packet.
 """
 
 import time
+import hashlib
 from enum import Enum, IntEnum
 from typing import TYPE_CHECKING, Tuple, Union, Optional
 
@@ -324,8 +325,15 @@ async def handle_login_notify(
         packet.command_name,
         packet.data,
     )
-    if hasattr(request, "message"):
+
+    if request.message:
         msg = request.message
+
+        data_hash = hashlib.md5(packet.data[9:]).digest()
+        if data_hash == client._online_push_cache.get("LoginNotifyHash"):
+            return request
+        else:
+            client._online_push_cache["LoginNotifyHash"] = data_hash
 
         client.dispatch_event(
             OtherClientChangedEvent(
