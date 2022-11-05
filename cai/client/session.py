@@ -660,19 +660,18 @@ class Session:
                     "Maximum number of login attempts exceeded!",
                 )
         elif isinstance(response, UnknownLoginStatus):
-            t146 = response._tlv_map.get(0x146)
-            t149 = response._tlv_map.get(0x149)
-            if t146:
-                packet_ = Packet(t146)
-                msg = packet_.start(4).string(2).execute()[0]
-            elif t149:
-                packet_ = Packet(t149)
-                msg = packet_.start(2).string(2).execute()[0]
+            tlv = response._tlv_map
+            if 0x146 in tlv:
+                packet_ = Packet(tlv.get(0x146))
+                msg = ": ".join(packet_.start(4).string(2).string(2).execute())
+            elif 0x149 in tlv:
+                packet_ = Packet(tlv.get(0x149))
+                msg = ": ".join(packet_.start(2).string(2).string(2).execute())
             else:
-                msg = ""
-            log.logger.debug(f"未知的登录返回码 {response.status}! {msg}")
+                msg = "empty msg"
+            log.logger.debug(f"未知的登录返回码 {response.status} -> {msg}")
             raise LoginException(
-                response.uin, response.status, "Unknown login status."
+                response.uin, response.status, msg
             )
 
     async def _init(self, drop_offline_msg: bool = True) -> None:
