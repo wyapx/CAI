@@ -11,5 +11,5 @@ This module is used to build application logger.
 import logging
 
 logger = logging.getLogger("cai")
-network = logging.getLogger("cai.network")
-highway = logging.getLogger("cai.highway")
+network = logger.getChild("network")
+highway = logger.getChild("highway")
