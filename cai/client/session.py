@@ -565,7 +565,7 @@ class Session:
 
     def dispatch_event(self, event: Event) -> None:
         if event.type not in ("group_message", "private_message", "temp_message"):  # log filter
-            log.logger.debug(f"Event {event.type} was triggered")
+            log.logger.debug(f"Event {event.type} was trigged")
         for listener in self.listeners:
             asyncio.create_task(self._run_listener(listener, event))
 
