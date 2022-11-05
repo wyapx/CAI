@@ -460,7 +460,7 @@ class TroopMessageDecoder:
             rand,
             time,
             troop.group_code,
-            troop.group_name.decode("utf-8"),
+            troop.group_name.decode("utf-8", errors="replace"),  # FIXME
             troop.group_level,
             from_uin,
             troop.group_card.decode("utf-8"),
