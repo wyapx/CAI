@@ -31,7 +31,7 @@ class ApkInfo(NamedTuple):
 
 ANDROID_PHONE = ApkInfo(
     apk_id="com.tencent.mobileqq",
-    app_id=537151682,
+    app_id=16,
     sub_app_id=537151682,
     version="8.9.33.10335",
     build_time=1607689988,
@@ -58,7 +58,7 @@ ANDROID_PHONE = ApkInfo(
     sdk_version="6.0.0.2530",
     sso_version=16,
     bitmap=150470524,
-    main_sigmap=34869472,
+    main_sigmap=16724722,
     sub_sigmap=0x10400,
 )
 ANDROID_WATCH = ApkInfo(
