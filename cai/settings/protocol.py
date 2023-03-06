@@ -55,9 +55,9 @@ ANDROID_PHONE = ApkInfo(
             0x8D,
         ]
     ),
-    sdk_version="6.0.0.2494",
+    sdk_version="6.0.0.2530",
     sso_version=16,
-    bitmap=184024956,
+    bitmap=150470524,
     main_sigmap=34869472,
     sub_sigmap=0x10400,
 )
