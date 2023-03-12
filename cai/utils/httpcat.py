@@ -2,10 +2,12 @@ import gzip
 import zlib
 import json
 import asyncio
+import logging
 from dataclasses import dataclass
 from typing import Dict, Tuple, Union
 from urllib import parse
 
+_logger = logging.getLogger("cai.utils.httpcat")
 
 @dataclass
 class HttpResponse:
@@ -160,6 +162,7 @@ class HttpCat:
             cookies,
             ssl
         )
+        _logger.debug(f"request: {method} {url} {resp.code}")
         if resp.code // 100 == 3 and follow_redirect:
             return await cls.request(
                 method,
