@@ -118,6 +118,7 @@ class HttpCat:
             "Host": address[0],
             "Connection": "close",
             "User-Agent": "HttpCat/1.0",
+            "Accept-Encoding": "gzip, deflate",
             "Content-Length": "0" if not body else str(len(body)),
             **(header if header else {})
         }
