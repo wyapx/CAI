@@ -85,6 +85,7 @@ class DeviceInfo(JsonableDataclass):
     imei: str
     android_id: str
     version: Version
+    qimei: str = ""
     sim: str = "T-Mobile"
     os_type: str = "android"
     apn: str = "wifi"

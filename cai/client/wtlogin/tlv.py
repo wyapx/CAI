@@ -595,9 +595,12 @@ class TlvEncoder:
         )
 
     @classmethod
-    def t544(cls) -> "Packet[()]":
+    def t544(cls) -> "Packet[()]":  # FIXME: bad implement
         return cls._pack_tlv(0x544, bytes([0, 0, 0, 11]))
 
+    @classmethod
+    def t545(cls, qimei: bytes) -> "Packet[()]":
+        return cls._pack_tlv(0x545, qimei)
 
 class TlvDecoder:
     @classmethod

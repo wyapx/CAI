@@ -511,6 +511,7 @@ def encode_login_request9(
         TlvEncoder.t521(),
         TlvEncoder.t525(TlvEncoder.t536([])),
         # TlvEncoder.t318()  # not login in by qr
+        TlvEncoder.t545(bytes.fromhex(device.qimei))
     )
     oicq_packet = OICQRequest.build_encoded(
         uin, COMMAND_ID, ECDH.encrypt(data, key), ECDH.id
@@ -622,6 +623,7 @@ def encode_login_request11(
                 "mma.qq.com",
             ]
         ),  # com.tencent.mobileqq.msf.core.auth.l
+        TlvEncoder.t545(bytes.fromhex(device.qimei))
     )
     oicq_packet = OICQRequest.build_encoded(
         uin, COMMAND_ID, ECDH.encrypt(data, key), ECDH.id
@@ -864,6 +866,7 @@ def encode_exchange_emp_15(
         TlvEncoder.t516(),
         TlvEncoder.t521(),
         TlvEncoder.t525(TlvEncoder.t536([])),
+        TlvEncoder.t545(bytes.fromhex(device.qimei))
     )
     session = EncryptSession(wt_session_ticket)
     oicq_packet = OICQRequest.build_encoded(

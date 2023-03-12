@@ -29,6 +29,8 @@ from cachetools import TTLCache
 
 from cai import log
 from cai.utils.binary import Packet
+from cai.utils.qimei.request import get_qimei, QueryData
+from cai.utils.qimei.device import device_info
 from cai.client.events.base import Event
 from cai.utils.future import FutureStore
 from cai.settings.protocol import ApkInfo
@@ -712,6 +714,23 @@ class Session:
             LoginException: Unknown login return code or other exception.
         """
         seq = self.next_seq()
+
+        qimei = await get_qimei(
+            QueryData(
+                secrets.token_hex(8),
+                secrets.token_hex(8)
+            ),
+            device_info(
+                androidId=self._device.android_id,
+                mac=self._device.mac_address,
+                imei=self._device.imei,
+                imsi=self._device.imsi_md5.hex(),
+                model=self.device.model
+            )
+        )
+        assert qimei["q36"] == qimei["q16"]
+        self._device.qimei = qimei["q36"]
+
         packet = encode_login_request9(
             seq,
             self._key,
