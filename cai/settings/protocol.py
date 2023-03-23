@@ -10,6 +10,7 @@ Once the protocol setting is loaded, it will be cached until application shut do
 .. _LICENSE:
     https://github.com/cscs181/CAI/blob/master/LICENSE
 """
+import warnings
 from typing import NamedTuple
 
 from cai.storage import Storage
@@ -29,156 +30,184 @@ class ApkInfo(NamedTuple):
     sub_sigmap: int  # oicq.wlogin_sdk.request.WtloginHelper.mSubSigMap
 
 
-ANDROID_PHONE = ApkInfo(
-    apk_id="com.tencent.mobileqq",
-    app_id=16,
-    sub_app_id=537151682,
-    version="8.9.33.10335",
-    build_time=1607689988,
-    apk_sign=bytes(
-        [
-            0xA6,
-            0xB7,
-            0x45,
-            0xBF,
-            0x24,
-            0xA2,
-            0xC2,
-            0x77,
-            0x52,
-            0x77,
-            0x16,
-            0xF6,
-            0xF3,
-            0x6E,
-            0xB6,
-            0x8D,
-        ]
-    ),
-    sdk_version="6.0.0.2530",
-    sso_version=16,
-    bitmap=150470524,
-    main_sigmap=16724722,
-    sub_sigmap=0x10400,
-)
-ANDROID_WATCH = ApkInfo(
-    apk_id="com.tencent.qqlite",
-    app_id=16,
-    sub_app_id=537064446,
-    version="2.0.5",
-    build_time=1571193922,
-    apk_sign=bytes(
-        [
-            0xA6,
-            0xB7,
-            0x45,
-            0xBF,
-            0x24,
-            0xA2,
-            0xC2,
-            0x77,
-            0x52,
-            0x77,
-            0x16,
-            0xF6,
-            0xF3,
-            0x6E,
-            0xB6,
-            0x8D,
-        ]
-    ),
-    sdk_version="6.0.0.236",
-    sso_version=5,
-    bitmap=16252796,
-    main_sigmap=34869472,
-    sub_sigmap=0x10400,
-)
-IPAD = ApkInfo(
-    apk_id="com.tencent.minihd.qq",
-    app_id=16,
-    sub_app_id=537065739,
-    version="5.8.9",
-    build_time=1595836208,
-    apk_sign=bytes(
-        [
-            170,
-            57,
-            120,
-            244,
-            31,
-            217,
-            111,
-            249,
-            145,
-            74,
-            102,
-            158,
-            24,
-            100,
-            116,
-            199,
-        ]
-    ),
-    sdk_version="6.0.0.2433",
-    sso_version=12,
-    bitmap=150470524,
-    main_sigmap=1970400,
-    sub_sigmap=66560,
-)
-MACOS = ApkInfo(
-    apk_id="com.tencent.qq",
-    app_id=16,
-    sub_app_id=537119282,
-    version="6.7.9",
-    build_time=1595836208,
-    apk_sign=bytes(
-        [
-            170,
-            57,
-            120,
-            244,
-            31,
-            217,
-            111,
-            249,
-            145,
-            74,
-            102,
-            158,
-            24,
-            100,
-            116,
-            199,
-        ]
-    ),
-    sdk_version="6.2.0.1023",
-    sso_version=12,
-    bitmap=150470524,
-    main_sigmap=1970400,
-    sub_sigmap=66560,
-)
+class Protocols:
+    class Android:
+        PHONE = ApkInfo(
+            apk_id="com.tencent.mobileqq",
+            app_id=16,
+            sub_app_id=537153294,
+            version="8.9.33.10440",
+            build_time=1676531414,
+            apk_sign=bytes(
+                [
+                    0xA6,
+                    0xB7,
+                    0x45,
+                    0xBF,
+                    0x24,
+                    0xA2,
+                    0xC2,
+                    0x77,
+                    0x52,
+                    0x77,
+                    0x16,
+                    0xF6,
+                    0xF3,
+                    0x6E,
+                    0xB6,
+                    0x8D,
+                ]
+            ),
+            sdk_version="6.0.0.2535",
+            sso_version=19,
+            bitmap=150470524,
+            main_sigmap=16724722,
+            sub_sigmap=0x10400,
+        )
+
+        PAD = ApkInfo(
+            apk_id="com.tencent.mobileqq",
+            app_id=16,
+            sub_app_id=537152242,
+            version="8.9.33.10335",
+            build_time=1676531414,
+            apk_sign=bytes(
+                [
+                    0xA6,
+                    0xB7,
+                    0x45,
+                    0xBF,
+                    0x24,
+                    0xA2,
+                    0xC2,
+                    0x77,
+                    0x52,
+                    0x77,
+                    0x16,
+                    0xF6,
+                    0xF3,
+                    0x6E,
+                    0xB6,
+                    0x8D,
+                ]
+            ),
+            sdk_version="6.0.0.2535",
+            sso_version=19,
+            bitmap=150470524,
+            main_sigmap=16724722,
+            sub_sigmap=0x10400,
+        )
+
+        WATCH = ApkInfo(
+            apk_id="com.tencent.qqlite",
+            app_id=16,
+            sub_app_id=537064446,
+            version="2.0.5",
+            build_time=1571193922,
+            apk_sign=bytes(
+                [
+                    0xA6,
+                    0xB7,
+                    0x45,
+                    0xBF,
+                    0x24,
+                    0xA2,
+                    0xC2,
+                    0x77,
+                    0x52,
+                    0x77,
+                    0x16,
+                    0xF6,
+                    0xF3,
+                    0x6E,
+                    0xB6,
+                    0x8D,
+                ]
+            ),
+            sdk_version="6.0.0.236",
+            sso_version=5,
+            bitmap=16252796,
+            main_sigmap=34869472,
+            sub_sigmap=0x10400,
+        )
+
+    IPAD = ApkInfo(
+        apk_id="com.tencent.minihd.qq",
+        app_id=16,
+        sub_app_id=537065739,
+        version="5.8.9",
+        build_time=1595836208,
+        apk_sign=bytes(
+            [
+                170,
+                57,
+                120,
+                244,
+                31,
+                217,
+                111,
+                249,
+                145,
+                74,
+                102,
+                158,
+                24,
+                100,
+                116,
+                199,
+            ]
+        ),
+        sdk_version="6.0.0.2433",
+        sso_version=12,
+        bitmap=150470524,
+        main_sigmap=1970400,
+        sub_sigmap=66560,
+    )
+    MACOS = ApkInfo(
+        apk_id="com.tencent.qq",
+        app_id=16,
+        sub_app_id=537119282,
+        version="6.7.9",
+        build_time=1595836208,
+        apk_sign=bytes(
+            [
+                170,
+                57,
+                120,
+                244,
+                31,
+                217,
+                111,
+                249,
+                145,
+                74,
+                102,
+                158,
+                24,
+                100,
+                116,
+                199,
+            ]
+        ),
+        sdk_version="6.2.0.1023",
+        sso_version=12,
+        bitmap=150470524,
+        main_sigmap=1970400,
+        sub_sigmap=66560,
+    )
 
 
 def get_apk_info(_type: str = "IPAD") -> ApkInfo:
+    warnings.warn(
+        "get_apk_info will be remove in the future, use Protocols class instead.",
+        DeprecationWarning
+    )
     info = {
-        "IPAD": IPAD,
-        "ANDROID_PHONE": ANDROID_PHONE,
-        "ANDROID_WATCH": ANDROID_WATCH,
-        "MACOS": MACOS,
+        "IPAD": Protocols.IPAD,
+        "ANDROID_PHONE": Protocols.Android.PHONE,
+        "ANDROID_WATCH": Protocols.Android.WATCH,
+        "MACOS": Protocols.MACOS,
     }
     if _type not in info:
         raise ValueError(f"Invalid Protocol Type: {_type}")
     return info[_type]
-
-
-def get_protocol(uin: int, cache: bool = True) -> ApkInfo:
-    protocol_file = Storage.get_account_config_dir(uin) / "protocol"
-
-    if cache and protocol_file.exists():
-        type_ = protocol_file.read_text()
-    else:
-        type_ = "IPAD"
-        protocol_file.write_text(type_)
-
-    protocol = get_apk_info(type_)
-    return protocol

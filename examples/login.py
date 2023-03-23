@@ -14,6 +14,7 @@ from io import BytesIO
 
 from PIL import Image
 from cai import Client, LoginSliderNeeded, LoginCaptchaNeeded, LoginDeviceLocked
+from cai.settings.protocol import Protocols
 
 
 async def login_resolver(client: Client, exception: Exception):
@@ -93,7 +94,7 @@ async def main():
     ci = Client(
         int(account),
         password,
-        protocol="ANDROID_PHONE"  # or use IPAD,ANDROID_WATCH,MACOS
+        protocol=Protocols.Android.PHONE  # or use IPAD,ANDROID_WATCH,MACOS
     )
 
     try:

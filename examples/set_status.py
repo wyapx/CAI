@@ -13,6 +13,7 @@ import logging
 
 from cai import Client
 from cai.client import OnlineStatus
+from cai.settings.protocol import Protocols
 
 
 async def main():
@@ -23,7 +24,7 @@ async def main():
     ci = Client(
         int(account),
         password,
-        protocol="ANDROID_PHONE"  # or use IPAD,ANDROID_WATCH,MACOS
+        protocol=Protocols.Android.PHONE  # or use IPAD,ANDROID_WATCH,MACOS
     )
 
     await ci.login()

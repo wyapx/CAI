@@ -15,7 +15,7 @@ from jce import types
 
 from cai.settings.device import new_device
 from cai.exceptions import SsoServerException
-from cai.settings.protocol import get_apk_info
+from cai.settings.protocol import Protocols
 from cai.utils.httpcat import HttpCat
 from cai.utils.jce import RequestPacketVersion3
 from cai.connection.utils import tcp_latency_test
@@ -57,7 +57,7 @@ async def get_sso_list() -> SsoServerResponse:
         SsoServerException: Get sso server list failed.
     """
     device = new_device()
-    protocol = get_apk_info()
+    protocol = Protocols.Android.PHONE
     key = bytes(
         [
             0xF0,

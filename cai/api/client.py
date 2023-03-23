@@ -9,6 +9,7 @@
 import asyncio
 import hashlib
 import random
+import warnings
 from typing import Union, BinaryIO, Optional, Sequence, Tuple, Dict, NoReturn, List
 
 from cai import log
@@ -16,7 +17,7 @@ from cai.client import Session, OnlineStatus
 from cai.settings.device import get_device
 from cai.pb.msf.msg.svc import PbSendMsgResp
 from cai.client.highway import HighWaySession
-from cai.settings.protocol import get_protocol, get_apk_info
+from cai.settings.protocol import get_apk_info, Protocols, ApkInfo
 from cai.client.message_service.encoders import build_msg, make_msg_pkg
 from cai.client.events.common import GroupMessage
 from cai.client.message_service.models import (
@@ -41,17 +42,24 @@ from .error import (
 
 
 def _make_session(uin: int, passwd: Union[str, bytes], protocol: Optional[str] = None) -> Session:
+    if not protocol:
+        warnings.warn("Argument 'protocol' not set")
+        apk_info = Protocols.Android.PAD
+    elif isinstance(protocol, str):
+        warnings.warn("String protocol type will be deprecated, use protocol class instead")
+        apk_info = get_apk_info(protocol)
+    else:
+        apk_info = protocol
+
     if not (isinstance(passwd, bytes) and len(passwd) == 16):
         # not a valid md5 passwd
         if isinstance(passwd, bytes):
             passwd = hashlib.md5(passwd).digest()
         else:
             passwd = hashlib.md5(passwd.encode()).digest()
+
     device = get_device(uin)
-    if not protocol:
-        apk_info = get_protocol(uin)
-    else:
-        apk_info = get_apk_info(protocol)
+
     return Session(uin, passwd, device, apk_info)
 
 
@@ -60,7 +68,7 @@ class Client(_Login, _Friend, _Group, _Events):
         self,
         uin: int,
         passwd: Union[str, bytes],
-        protocol: Optional[str] = None,
+        protocol: Union[ApkInfo, str, None] = None,
     ):
         session = _make_session(uin, passwd, protocol=protocol)
         self.session = session
