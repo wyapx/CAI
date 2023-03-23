@@ -101,9 +101,9 @@ class Protocols:
         WATCH = ApkInfo(
             apk_id="com.tencent.qqlite",
             app_id=16,
-            sub_app_id=537064446,
-            version="2.0.5",
-            build_time=1571193922,
+            sub_app_id=537065138,
+            version="2.0.8",
+            build_time=1559564731,
             apk_sign=bytes(
                 [
                     0xA6,
@@ -124,7 +124,7 @@ class Protocols:
                     0x8D,
                 ]
             ),
-            sdk_version="6.0.0.236",
+            sdk_version="6.0.0.2365",
             sso_version=5,
             bitmap=16252796,
             main_sigmap=34869472,
@@ -134,8 +134,8 @@ class Protocols:
     IPAD = ApkInfo(
         apk_id="com.tencent.minihd.qq",
         app_id=16,
-        sub_app_id=537065739,
-        version="5.8.9",
+        sub_app_id=537118796,
+        version="5.9.3",
         build_time=1595836208,
         apk_sign=bytes(
             [
@@ -166,8 +166,8 @@ class Protocols:
     MACOS = ApkInfo(
         apk_id="com.tencent.qq",
         app_id=16,
-        sub_app_id=537119282,
-        version="6.7.9",
+        sub_app_id=537128930,
+        version="5.8.9",
         build_time=1595836208,
         apk_sign=bytes(
             [
@@ -189,7 +189,7 @@ class Protocols:
                 199,
             ]
         ),
-        sdk_version="6.2.0.1023",
+        sdk_version="6.0.0.2433",
         sso_version=12,
         bitmap=150470524,
         main_sigmap=1970400,
