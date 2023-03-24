@@ -20,7 +20,7 @@ from typing import (
     Generic,
     NewType,
     TypeVar,
-    Callable,
+    Callable, Optional,
 )
 
 P = TypeVar("P", bound="BasePacket")
@@ -179,6 +179,17 @@ class Packet(BasePacket, Generic[Unpack[Ts]]):
 
     def _get_position(self) -> int:
         return struct.calcsize(self._query) + self._offset
+
+    @classmethod
+    def build_pkg(
+        cls: Type[P],
+        sub_cmd: int,
+        *pkgs: Union[bytes, "BasePacket"],
+        optional_pkgs: List[Optional[Union[bytes, "BasePacket"]]] = None
+    ) -> P:
+        if optional_pkgs:
+            pkgs = list(pkgs) + list(filter(lambda x: x is not None, optional_pkgs))
+        return struct.pack(">HH", sub_cmd, len(pkgs)) + cls.build(*pkgs)
 
     def start(self: "Packet[Unpack[Ts]]", offset: int = 0) -> "Packet[()]":
         self._query: str = ">"

@@ -602,6 +602,11 @@ class TlvEncoder:
     def t545(cls, qimei: bytes) -> "Packet[()]":
         return cls._pack_tlv(0x545, qimei)
 
+    @classmethod
+    def t547(cls, sig_547: bytes) -> "Packet[()]":
+        return cls._pack_tlv(0x547, sig_547)
+
+
 class TlvDecoder:
     @classmethod
     def decode(

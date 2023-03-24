@@ -40,6 +40,7 @@ from .oicq import (
     TooManySMSRequest,
     UnknownLoginStatus,
 )
+from ...utils.pow import t546_challenge
 
 if TYPE_CHECKING:
     from cai.client import Session
@@ -56,6 +57,7 @@ def encode_login_request2_captcha(
     captcha: str,
     sign: bytes,
     t104: bytes,
+    t547: bytes,
     imei: str,
     apk_info: ApkInfo,
 ) -> Packet:
@@ -97,12 +99,15 @@ def encode_login_request2_captcha(
 
     LOCAL_ID = 2052  # oicq.wlogin_sdk.request.t.v
 
-    data = Packet.build(
-        struct.pack(">HH", SUB_COMMAND_ID, 4),  # packet num
+    data = Packet.build_pkg(
+        SUB_COMMAND_ID,  # packet num
         TlvEncoder.t2(captcha.encode(), sign),
         TlvEncoder.t8(LOCAL_ID),
         TlvEncoder.t104(t104),
         TlvEncoder.t116(BITMAP, SUB_SIGMAP),
+        optional_pkgs=[
+            TlvEncoder.t547(t547) if t547 else None
+        ]
     )
     oicq_packet = OICQRequest.build_encoded(
         uin, COMMAND_ID, ECDH.encrypt(data, key), ECDH.id
@@ -130,6 +135,7 @@ def encode_login_request2_slider(
     uin: int,
     ticket: str,
     t104: bytes,
+    t547: bytes,
     imei: str,
     apk_info: ApkInfo,
 ) -> Packet:
@@ -170,12 +176,15 @@ def encode_login_request2_slider(
 
     LOCAL_ID = 2052  # oicq.wlogin_sdk.request.t.v
 
-    data = Packet.build(
-        struct.pack(">HH", SUB_COMMAND_ID, 4),  # packet num
+    data = Packet.build_pkg(
+        SUB_COMMAND_ID,  # packet num
         TlvEncoder.t193(ticket),
         TlvEncoder.t8(LOCAL_ID),
         TlvEncoder.t104(t104),
         TlvEncoder.t116(BITMAP, SUB_SIGMAP),
+        optional_pkgs=[
+            TlvEncoder.t547(t547) if t547 else None
+        ]
     )
     oicq_packet = OICQRequest.build_encoded(
         uin, COMMAND_ID, ECDH.encrypt(data, key), ECDH.id
@@ -252,8 +261,8 @@ def encode_login_request7(
     GUID_FLAG |= GUID_CHANGE << 8 & 0xFF00
     LOCAL_ID = 2052  # oicq.wlogin_sdk.request.t.v
 
-    data = Packet.build(
-        struct.pack(">HH", SUB_COMMAND_ID, 7),  # packet num
+    data = Packet.build_pkg(
+        SUB_COMMAND_ID,
         TlvEncoder.t8(LOCAL_ID),
         TlvEncoder.t104(t104),
         TlvEncoder.t116(BITMAP, SUB_SIGMAP),
@@ -334,8 +343,8 @@ def encode_login_request8(
     GUID_FLAG |= GUID_CHANGE << 8 & 0xFF00
     LOCAL_ID = 2052  # oicq.wlogin_sdk.request.t.v
 
-    data = Packet.build(
-        struct.pack(">HH", SUB_COMMAND_ID, 6),  # packet num
+    data = Packet.build_pkg(
+        SUB_COMMAND_ID,
         TlvEncoder.t8(LOCAL_ID),
         TlvEncoder.t104(t104),
         TlvEncoder.t116(BITMAP, SUB_SIGMAP),
@@ -906,6 +915,10 @@ async def handle_oicq_response(
         client._siginfo.g = md5(
             client.device.guid + client._siginfo.dpwd + client._t402
         ).digest()
+    if response.t546 and not client._t547:
+        client._t547 = t546_challenge(
+            response.t546
+        )
 
     if isinstance(response, LoginSuccess):
         client._t150 = response.t150 or client._t150

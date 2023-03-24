@@ -195,6 +195,7 @@ class Session:
         self._t402: bytes = bytes()
         self._t528: bytes = bytes()
         self._t530: bytes = bytes()
+        self._t547: bytes = bytes()
 
         self._init_flag: bool = False
         self._listeners: Set[LT] = set()
@@ -791,6 +792,7 @@ class Session:
             captcha,
             captcha_sign,
             self._t104,
+            self._t547,
             self.device.imei,
             self.apk_info,
         )
@@ -824,6 +826,7 @@ class Session:
             self.uin,
             ticket,
             self._t104,
+            self._t547,
             self.device.imei,
             self.apk_info,
         )

@@ -137,6 +137,7 @@ class UnknownLoginStatus(OICQResponse):
     _tlv_map: Dict[int, Any]
 
     t402: Optional[bytes]
+    t546: Optional[bytes]
 
     def __init__(
         self,
@@ -154,6 +155,7 @@ class UnknownLoginStatus(OICQResponse):
         self._tlv_map = _tlv_map
 
         self.t402 = _tlv_map.get(0x402)
+        self.t546 = _tlv_map.get(0x546)
 
 
 @dataclass
