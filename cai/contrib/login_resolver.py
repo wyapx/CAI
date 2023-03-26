@@ -29,18 +29,18 @@ class LoginResolver:
     async def login(self, *, exc=None):
         client = self._client
         if exc:
-            if isinstance(e, ApiResponseError):
-                await self.on_api_response_err(client, e)
-            elif isinstance(e, LoginSliderNeeded):
-                await self.on_login_slider_needed(client, e)
-            elif isinstance(e, LoginCaptchaNeeded):
-                await self.on_login_captcha_needed(client, e)
-            elif isinstance(e, LoginDeviceLocked):
-                await self.on_login_device_locked(client, e)
-            elif isinstance(e, LoginSMSRequestError):
-                await self.on_login_sms_request_error(client, e)
-            elif isinstance(e, LoginAccountFrozen):
-                await self.on_login_account_frozen_error(client, e)
+            if isinstance(exc, ApiResponseError):
+                await self.on_api_response_err(client, exc)
+            elif isinstance(exc, LoginSliderNeeded):
+                await self.on_login_slider_needed(client, exc)
+            elif isinstance(exc, LoginCaptchaNeeded):
+                await self.on_login_captcha_needed(client, exc)
+            elif isinstance(exc, LoginDeviceLocked):
+                await self.on_login_device_locked(client, exc)
+            elif isinstance(exc, LoginSMSRequestError):
+                await self.on_login_sms_request_error(client, exc)
+            elif isinstance(exc, LoginAccountFrozen):
+                await self.on_login_account_frozen_error(client, exc)
             else:
                 raise
         try:
