@@ -26,11 +26,9 @@ class LoginResolver:
     def __init__(self, client: Client):
         self._client = client
 
-    async def login(self):
+    async def login(self, *, exc=None):
         client = self._client
-        try:
-            await client.login()
-        except (LoginException, ApiResponseError) as e:
+        if exc:
             if isinstance(e, ApiResponseError):
                 await self.on_api_response_err(client, e)
             elif isinstance(e, LoginSliderNeeded):
@@ -45,7 +43,10 @@ class LoginResolver:
                 await self.on_login_account_frozen_error(client, e)
             else:
                 raise
-            return await self.login()
+        try:
+            await client.login()
+        except (LoginException, ApiResponseError) as e:
+            return await self.login(exc=e)
         print("登录成功")
 
     async def on_api_response_err(self, client: Client, exc: ApiResponseError):
