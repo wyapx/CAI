@@ -110,6 +110,7 @@ class LoginResolver:
             sms_code = (await async_read.readline()).strip().decode()
             await client.submit_sms(sms_code)
         elif way == "url":
+            await client.close()
             print(f"Go to {exc.verify_url} to verify device!")
             print("Press ENTER after verification to continue login...")
             await async_read.readline()
