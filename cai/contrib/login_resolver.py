@@ -30,7 +30,7 @@ async def _connect_async_stdin() -> Callable[[str], Coroutine[Any, Any, bytes]]:
         reader = asyncio.StreamReader()
         protocol = asyncio.StreamReaderProtocol(reader)
         await loop.connect_read_pipe(lambda: protocol, sys.stdin)
-        sys.stdout.write(prompt)
+        print(prompt, end="")
         return await reader.readline()
 
     if sys.platform == "win32":
@@ -50,23 +50,29 @@ class LoginResolver:
         client = self._client
         try:
             if exc:
-                if isinstance(exc, ApiResponseError):
-                    await self.on_api_response_err(client, exc)
-                elif isinstance(exc, LoginSliderNeeded):
+                if isinstance(exc, LoginSliderNeeded):
                     await self.on_login_slider_needed(client, exc)
                 elif isinstance(exc, LoginCaptchaNeeded):
                     await self.on_login_captcha_needed(client, exc)
                 elif isinstance(exc, LoginDeviceLocked):
                     await self.on_login_device_locked(client, exc)
-                elif isinstance(exc, LoginSMSRequestError):
-                    await self.on_login_sms_request_error(client, exc)
-                elif isinstance(exc, LoginAccountFrozen):
-                    await self.on_login_account_frozen_error(client, exc)
                 else:
                     raise
             await client.login()
-        except (LoginException, ApiResponseError) as e:
+        except (
+            LoginDeviceLocked,
+            LoginSliderNeeded,
+            LoginCaptchaNeeded
+        ) as e:  # recoverable
             return await self._login(exc=e)
+
+        except (LoginException, ApiResponseError) as e:  # unrecoverable
+            if isinstance(exc, ApiResponseError):
+                await self.on_api_response_err(client, e)
+            elif isinstance(exc, LoginSMSRequestError):
+                await self.on_login_sms_request_error(client, e)
+            elif isinstance(exc, LoginAccountFrozen):
+                await self.on_login_account_frozen_error(client, e)
 
     async def on_api_response_err(self, client: Client, exc: ApiResponseError):
         raise
