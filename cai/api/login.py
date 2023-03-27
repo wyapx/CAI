@@ -7,6 +7,7 @@
     https://github.com/cscs181/CAI/blob/master/LICENSE
 """
 import pickle
+import time
 
 from cai.exceptions import LoginException
 
@@ -32,18 +33,21 @@ class Login(BaseAPI):
             await self.session.close()
             raise
 
-    async def token_login(self, sig: bytes):
+    async def token_login(self, token: dict):
         await self.session.connect()
         try:
-            await self._executor("token_login", pickle.loads(sig))
+            await self._executor("token_login", token)
         except LoginException:
             raise  # user handle required
         except Exception:
             await self.session.close()
             raise
 
-    def dump_sig(self) -> bytes:
-        return pickle.dumps(self.session._siginfo)
+    def dump_token(self) -> bytes:
+        siginfo = self.session._siginfo.to_dict()
+        siginfo["ExpireTime"] = int(time.time() + (86400 * 5))  # 5d
+        siginfo["DeviceType"] = self.session.apk_info.device_type
+        return pickle.dumps(siginfo)
 
     async def submit_captcha(self, captcha: str, captcha_sign: bytes) -> bool:
         """Submit captcha data to login.

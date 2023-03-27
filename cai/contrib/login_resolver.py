@@ -1,6 +1,12 @@
 import asyncio
+import pickle
 import sys
+import time
 
+from typing import Callable, Any, Coroutine
+
+from cai.log import logger
+from cai.storage import Storage
 from cai.api.client import Client
 from cai.utils.httpcat import HttpCat
 from cai.exceptions import (
@@ -14,19 +20,33 @@ from cai.exceptions import (
 )
 
 
-async def _connect_async_stdin() -> asyncio.StreamReader:
+async def _connect_async_stdin() -> Callable[[str], Coroutine[Any, Any, bytes]]:
     loop = asyncio.get_running_loop()
-    reader = asyncio.StreamReader()
-    protocol = asyncio.StreamReaderProtocol(reader)
-    await loop.connect_read_pipe(lambda: protocol, sys.stdin)
-    return reader
+
+    async def _win32(prompt: str = "") -> bytes:
+        return (await asyncio.to_thread(input, prompt)).encode()
+
+    async def _asyncio(prompt: str = "") -> bytes:
+        reader = asyncio.StreamReader()
+        protocol = asyncio.StreamReaderProtocol(reader)
+        await loop.connect_read_pipe(lambda: protocol, sys.stdin)
+        sys.stdout.write(prompt)
+        return await reader.readline()
+
+    if sys.platform == "win32":
+        return _win32
+    else:
+        return _asyncio
 
 
 class LoginResolver:
-    def __init__(self, client: Client):
+    def __init__(self, client: Client, use_cache=True):
         self._client = client
+        self._logger = logger.getChild("login_resolver")
+        self.use_cache = use_cache
+        self.login_cache_file = Storage.cache_dir / f"{client.uin}_token.session"
 
-    async def login(self, *, exc=None):
+    async def _login(self, *, exc=None):
         client = self._client
         try:
             if exc:
@@ -46,8 +66,7 @@ class LoginResolver:
                     raise
             await client.login()
         except (LoginException, ApiResponseError) as e:
-            return await self.login(exc=e)
-        print("登录成功")
+            return await self._login(exc=e)
 
     async def on_api_response_err(self, client: Client, exc: ApiResponseError):
         raise
@@ -56,9 +75,8 @@ class LoginResolver:
         url = exc.verify_url.replace("ssl.captcha.qq.com", "txhelper.glitch.me")
         print("本次操作需要进行滑块验证(留空可使用TxCaptchaHelper)")
         print("验证地址:", url)
-        print("输入获取到的验证码 -> ", end="")
         async_input = await _connect_async_stdin()
-        ticket = (await async_input.readline()).strip()
+        ticket = (await async_input("输入获取到的验证码 -> ")).strip()
         if not ticket:
             print("将使用TxCaptchaHelper，请等待")
             resp = await HttpCat.request("GET", url)
@@ -91,8 +109,7 @@ class LoginResolver:
                         f"2. Verify device by url.\n" if exc.verify_url else ""
                     ])
                 )
-                print("Choose: ", end="")
-                choice = (await async_read.readline()).strip().decode()
+                choice = (await async_read("Choose: ")).strip().decode()
                 if "1" in choice and exc.sms_phone:
                     way = "sms"
                     break
@@ -106,14 +123,13 @@ class LoginResolver:
         if way == "sms":
             await client.request_sms()
             print(f"SMS was sent to {exc.sms_phone}!")
-            print("Please enter the sms_code: ", end="")
-            sms_code = (await async_read.readline()).strip().decode()
+            sms_code = (await async_read("Please enter the sms_code: ")).strip().decode()
             await client.submit_sms(sms_code)
         elif way == "url":
             await client.close()
             print(f"Go to {exc.verify_url} to verify device!")
-            print("Press ENTER after verification to continue login...")
-            await async_read.readline()
+            print()
+            await async_read("Press ENTER after verification to continue login...")
 
     async def on_login_sms_request_error(self, client: Client, exc: LoginSMSRequestError):
         raise
@@ -121,3 +137,41 @@ class LoginResolver:
     async def on_login_account_frozen_error(self, client: Client, exc: LoginAccountFrozen):
         raise
 
+    async def login(self):
+        await self.before_login()
+
+        try:
+            if self.login_cache_file.is_file() and self.use_cache:
+                self._logger.info("Cache found, trying to fast-login")
+                with open(self.login_cache_file, "rb") as f:
+                    token: dict = pickle.load(f)
+
+                if all((
+                    self._client.device_type == token.pop("DeviceType"),
+                    time.time() < token.pop("ExpireTime")
+                )):
+                    await self._client.token_login(token)
+                else:
+                    self._logger.warning("Cache is expired or device_type changed, ignore")
+                    self.use_cache = False
+        except:
+            if self._client.connected:
+                await self._client.close()
+                await asyncio.sleep(1)
+            self._logger.exception("fast-login failed")
+            self.login_cache_file.unlink(missing_ok=True)
+            self.use_cache = False
+
+        if not self._client.connected:
+            await self._login()
+
+        self._logger.info("登录成功!")
+        await self.after_login()
+
+    async def before_login(self):
+        pass
+
+    async def after_login(self):
+        with open(self.login_cache_file, "wb") as f:
+            f.write(self._client.dump_token())
+        self._logger.info("fast-login token saved")

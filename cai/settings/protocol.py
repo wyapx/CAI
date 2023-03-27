@@ -10,13 +10,12 @@ Once the protocol setting is loaded, it will be cached until application shut do
 .. _LICENSE:
     https://github.com/cscs181/CAI/blob/master/LICENSE
 """
+import dataclasses
 import warnings
-from typing import NamedTuple
-
-from cai.storage import Storage
 
 
-class ApkInfo(NamedTuple):
+@dataclasses.dataclass(frozen=True)
+class ApkInfo:
     apk_id: str
     app_id: int
     sub_app_id: int  # com.tencent.common.config.AppSetting.f
@@ -28,6 +27,8 @@ class ApkInfo(NamedTuple):
     bitmap: int  # oicq.wlogin_sdk.request.WtloginHelper.mMiscBitmap | 0x2000000
     main_sigmap: int  # com.tencent.mobileqq.msf.core.auth.n.f
     sub_sigmap: int  # oicq.wlogin_sdk.request.WtloginHelper.mSubSigMap
+
+    device_type: str
 
 
 class Protocols:
@@ -63,6 +64,7 @@ class Protocols:
             bitmap=150470524,
             main_sigmap=16724722,
             sub_sigmap=0x10400,
+            device_type="Android Phone"
         )
 
         PAD = ApkInfo(
@@ -96,6 +98,7 @@ class Protocols:
             bitmap=150470524,
             main_sigmap=16724722,
             sub_sigmap=0x10400,
+            device_type="Android Pad"
         )
 
         WATCH = ApkInfo(
@@ -129,6 +132,7 @@ class Protocols:
             bitmap=16252796,
             main_sigmap=34869472,
             sub_sigmap=0x10400,
+            device_type="Android Watch"
         )
 
     IPAD = ApkInfo(
@@ -162,6 +166,7 @@ class Protocols:
         bitmap=150470524,
         main_sigmap=1970400,
         sub_sigmap=66560,
+        device_type="iPad"
     )
     MACOS = ApkInfo(
         apk_id="com.tencent.qq",
@@ -194,6 +199,7 @@ class Protocols:
         bitmap=150470524,
         main_sigmap=1970400,
         sub_sigmap=66560,
+        device_type="MacOS"
     )
 
 

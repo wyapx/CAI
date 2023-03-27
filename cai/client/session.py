@@ -745,9 +745,9 @@ class Session:
         response = await self.send_and_wait(seq, "wtlogin.login", packet)
         return await self._handle_login_response(response)
 
-    async def token_login(self, sig_info: SigInfo) -> LoginSuccess:
+    async def token_login(self, sig_info: dict) -> LoginSuccess:
         seq = self.next_seq()
-        self._siginfo = sig_info
+        self._siginfo = SigInfo.from_dict(sig_info)
         self.device.tgtgt = hashlib.md5(self._siginfo.d2key).digest()
         packet = encode_login_request11(
             seq,
@@ -757,7 +757,7 @@ class Session:
             self._session_id,
             self._apk_info,
             self._device,
-            sig_info
+            self._siginfo
         )
         response = await self.send_and_wait(seq, "wtlogin.exchange_emp", packet)
         return await self._handle_login_response(response)

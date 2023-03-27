@@ -85,15 +85,13 @@ def _fromdict(cls, kvs):
         elif field_origin and issubclass(field_origin, Mapping):
             k_type, v_type = field_args or (Any, Any)
             init_kwargs[field.name] = field_origin(
-                zip(
-                    [
-                        (
-                            _convert_type(k_type, key),
-                            _convert_type(v_type, value),
-                        )
-                        for key, value in field_value.items()
-                    ]
-                )
+                [
+                    (
+                        _convert_type(k_type, key),
+                        _convert_type(v_type, value),
+                    )
+                    for key, value in field_value.items()
+                ]
             )  # type: ignore
         elif field_origin and issubclass(field_origin, Collection):
             type_ = field_args[0] or Any

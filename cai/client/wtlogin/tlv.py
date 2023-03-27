@@ -12,7 +12,7 @@ import time
 import random
 import struct
 from hashlib import md5
-from typing import Any, Dict, List, Union, Optional
+from typing import Any, Dict, List, Union, Optional, Callable
 
 from cai.utils.binary import Packet
 from cai.pb.wtlogin import DeviceReport
@@ -595,8 +595,25 @@ class TlvEncoder:
         )
 
     @classmethod
-    def t544(cls) -> "Packet[()]":  # FIXME: bad implement
-        return cls._pack_tlv(0x544, bytes([0, 0, 0, 11]))
+    def t544(
+        cls,
+        uin: int,
+        guid: bytes,
+        sub_cmd: int,
+        sdk_version: str,
+        signer: Callable[[bytes], bytes],
+        v2: bool = True
+    ) -> "Packet[()]":
+        if not v2:
+            salt = struct.pack(
+                "!Qh16sh",
+                uin,
+                len(guid),
+                guid,
+                len(sdk_version)
+            ) + sdk_version.encode() + sub_cmd.to_bytes(4, "big")
+        else:  # TODO: v2 support
+            pass
 
     @classmethod
     def t545(cls, qimei: bytes) -> "Packet[()]":

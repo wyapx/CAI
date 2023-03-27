@@ -46,7 +46,7 @@ def _make_session(uin: int, passwd: Union[str, bytes], protocol: Optional[str] =
         warnings.warn("Argument 'protocol' not set")
         apk_info = Protocols.Android.PAD
     elif isinstance(protocol, str):
-        warnings.warn("String protocol type will be deprecated, use protocol class instead")
+        warnings.warn("String protocol type was deprecated, use protocol class instead")
         apk_info = get_apk_info(protocol)
     else:
         apk_info = protocol

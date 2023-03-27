@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class SigInfo:
+class SigInfo(JsonableDataclass):
     """Account Siginfo.
 
     Note:

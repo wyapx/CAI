@@ -15,3 +15,11 @@ class BaseAPI:
             if uncaught_error:
                 await self.session.close()
             raise
+
+    @property
+    def device_type(self) -> str:
+        return self.session.apk_info.device_type
+
+    @property
+    def uin(self) -> int:
+        return self.session.uin
