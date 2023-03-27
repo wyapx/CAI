@@ -14,6 +14,7 @@ import sys
 from cai import Client
 from cai.client import Event
 from cai.client.events.common import PrivateMessage, GroupMessage
+from cai.contrib.login_resolver import LoginResolver
 from cai.settings.protocol import Protocols
 
 
@@ -28,7 +29,7 @@ async def main():
         protocol=Protocols.Android.PHONE  # or use IPAD,ANDROID_WATCH,MACOS
     )
 
-    await ci.login()
+    await LoginResolver(ci).login()
 
     ci.add_event_listener(listen_message)
     await ci.session.wait_closed()

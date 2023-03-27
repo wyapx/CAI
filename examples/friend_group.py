@@ -12,6 +12,7 @@ import asyncio
 import sys
 
 from cai.api.client import Client
+from cai.contrib.login_resolver import LoginResolver
 from cai.settings.protocol import Protocols
 
 
@@ -26,7 +27,7 @@ async def main():
         protocol=Protocols.Android.PHONE  # or use IPAD,ANDROID_WATCH,MACOS
     )
 
-    await ci.login()
+    await LoginResolver(ci).login()
     await asyncio.sleep(2)  # wait for a moment
     try:
         await run(ci)

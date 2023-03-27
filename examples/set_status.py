@@ -13,6 +13,7 @@ import logging
 
 from cai import Client
 from cai.client import OnlineStatus
+from cai.contrib.login_resolver import LoginResolver
 from cai.settings.protocol import Protocols
 
 
@@ -27,7 +28,7 @@ async def main():
         protocol=Protocols.Android.PHONE  # or use IPAD,ANDROID_WATCH,MACOS
     )
 
-    await ci.login()
+    await LoginResolver(ci).login()
 
     await ci.set_status(
         status=OnlineStatus.Qme,  # Q我吧
