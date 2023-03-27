@@ -13,14 +13,15 @@ import shutil
 from pathlib import Path
 from typing import Union
 
-from .utils import user_cache_dir, user_config_dir
+# from .utils import user_cache_dir, user_config_dir
 
 
 class Storage:
     app_name: str = "CAI"
 
     # application config dir
-    _default_app_dir: str = user_config_dir(app_name, roaming=True)
+    # _default_app_dir: str = user_config_dir(app_name, roaming=True)
+    _default_app_dir: str = os.path.abspath("./bot/config")
     app_dir: Path = Path(os.getenv(f"{app_name}_APP_DIR", _default_app_dir))
     app_dir.mkdir(parents=True, exist_ok=True)
     if not app_dir.is_dir():
@@ -30,7 +31,8 @@ class Storage:
         )
 
     # application cache dir
-    _default_cache_dir: str = user_cache_dir(app_name)
+    # _default_cache_dir: str = user_cache_dir(app_name)
+    _default_cache_dir: str = os.path.abspath("./bot/cache")
     cache_dir: Path = Path(
         os.getenv(f"{app_name}_CACHE_DIR", _default_cache_dir)
     )
