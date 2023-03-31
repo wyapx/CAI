@@ -1,14 +1,23 @@
 import asyncio
+import functools
 import pickle
 import sys
 import time
 
-from typing import Callable, Any, Coroutine
+from typing import Callable, Any, Coroutine, Sequence, AnyStr
 
 from cai.log import logger
 from cai.storage import Storage
 from cai.api.client import Client
 from cai.utils.httpcat import HttpCat
+from cai.settings.device import (
+    get_device,
+    save_device,
+    new_device,
+    new_imei,
+    new_android_id,
+    new_mac_address
+)
 from cai.exceptions import (
     LoginException,
     LoginDeviceLocked,
@@ -39,6 +48,35 @@ async def _connect_async_stdin() -> Callable[[str], Coroutine[Any, Any, bytes]]:
         return _asyncio
 
 
+async def chooser(description: str, options: Sequence[AnyStr], default: int = None) -> int:
+    async_stdin = await _connect_async_stdin()
+    while True:
+        print(description)
+        for k, v in enumerate(options):
+            print(f"  {k+1}:{v}")
+
+        i = await async_stdin(
+            ">>" if default is None else
+            f"[{default}]>>"
+        )
+        if not i and default is not None:
+            return default
+        elif not i:
+            print(f"输入有误，请重新选择")
+            continue
+
+        try:
+            i = int(i)
+        except ValueError:
+            print(f"输入有误，请重新选择")
+            continue
+
+        if 0 < i <= len(options):
+            return i
+        else:
+            print(f"输入有误，请重新选择")
+
+
 class LoginResolver:
     def __init__(self, client: Client, use_cache=True):
         self._client = client
@@ -46,7 +84,7 @@ class LoginResolver:
         self.use_cache = use_cache
         self.login_cache_file = Storage.cache_dir / f"{client.uin}_token.session"
 
-    async def _login(self, *, exc=None):
+    async def _login(self, *, exc=None) -> bool:
         client = self._client
         try:
             if exc:
@@ -67,16 +105,50 @@ class LoginResolver:
             return await self._login(exc=e)
 
         except (LoginException, ApiResponseError) as e:  # unrecoverable
-            if isinstance(exc, ApiResponseError):
-                await self.on_api_response_err(client, e)
-            elif isinstance(exc, LoginSMSRequestError):
-                await self.on_login_sms_request_error(client, e)
-            elif isinstance(exc, LoginAccountFrozen):
-                await self.on_login_account_frozen_error(client, e)
-            else:
-                raise
+            await self.unrecoverable_login_exception(e, client)
+            return False
 
-    async def on_api_response_err(self, client: Client, exc: ApiResponseError):
+        return True
+
+    @functools.singledispatchmethod
+    async def unrecoverable_login_exception(self, exc: LoginException, client: Client):
+        if exc.status == 1:  # wrong password
+            self._logger.critical(exc.message)
+        elif exc.status == 235:  # outdated client
+            r = await chooser(
+                "账号被风控（过期的客户端）\n"
+                "可能需要调整设备信息：",
+                (
+                    "重新生成device.json（会清除所有信息）",
+                    "只对部分信息进行重新生成（实验性功能）"
+                )
+            )
+            if r == 1:
+                save_device(
+                    client.uin,
+                    new_device(),
+                    backup=True
+                )
+            elif r == 2:
+                device = get_device(client.uin)
+                device.imei = new_imei()
+                device.android_id = new_android_id()
+                device.mac_address = new_mac_address()
+                save_device(client.uin, device, backup=True)
+            print("已重新生成，将在下次启动生效")
+        else:
+            raise
+
+    @unrecoverable_login_exception.register
+    async def _login_sms_request_error(self, _exc: LoginSMSRequestError, _client: Client):
+        self._logger.critical(f"验证短信发送间隔过短，请稍候再试")
+
+    @unrecoverable_login_exception.register
+    async def _login_account_frozen_error(self, exc: LoginAccountFrozen, _client: Client):
+        self._logger.critical(f"账号 {exc.uin} 已被冻结，请使用QQ客户端查看详情")
+
+    @unrecoverable_login_exception.register
+    async def _api_response_error(self, exc: ApiResponseError, client: Client):
         raise
 
     async def on_login_slider_needed(self, client: Client, exc: LoginSliderNeeded):
@@ -107,43 +179,37 @@ class LoginResolver:
 
     async def on_login_device_locked(self, client: Client, exc: LoginDeviceLocked):
         async_read = await _connect_async_stdin()
-        print("Device lock detected!")
+        print("发现设备锁")
         if exc.sms_phone or exc.verify_url:
-            while True:
-                print(
-                    "Choose a method to verity: \n",
-                    " ".join([
-                        f"1. Send sms message to {exc.sms_phone}.\n" if exc.sms_phone else "",
-                        f"2. Verify device by url.\n" if exc.verify_url else ""
-                    ])
-                )
-                choice = (await async_read("Choose: ")).strip().decode()
-                if "1" in choice and exc.sms_phone:
-                    way = "sms"
-                    break
-                elif "2" in choice and exc.verify_url:
-                    way = "url"
-                    break
-                print(f"'{choice}' is invalid!")
+            r = await chooser(
+                "需要使用以下方法进行设备锁验证：",
+                [
+                    i
+                    for i in (
+                        "进入QQ官方网站进行验证" if exc.verify_url else None,
+                        f"发送验证码到{exc.sms_phone}上" if exc.sms_phone else None
+                    ) if i
+                ]
+            )
+            if r == 1 and exc.verify_url:
+                way = "url"
+            elif r == 2 and exc.sms_phone:
+                way = "sms"
+            else:
+                raise ValueError(f"choice {r} is not support yet")
         else:
-            raise AssertionError("No way to verify device...")
+            raise AssertionError("没有可用的验证方式")
 
         if way == "sms":
             await client.request_sms()
-            print(f"SMS was sent to {exc.sms_phone}!")
-            sms_code = (await async_read("Please enter the sms_code: ")).strip().decode()
+            print(f"验证码已经发送到{exc.sms_phone}!")
+            sms_code = (await async_read("输入你获取到的验证码: ")).strip().decode()
             await client.submit_sms(sms_code)
         elif way == "url":
             await client.close()
-            print(f"Go to {exc.verify_url} to verify device!")
+            print(f"请到 {exc.verify_url} 完成验证")
             print()
-            await async_read("Press ENTER after verification to continue login...")
-
-    async def on_login_sms_request_error(self, client: Client, exc: LoginSMSRequestError):
-        raise
-
-    async def on_login_account_frozen_error(self, client: Client, exc: LoginAccountFrozen):
-        raise
+            await async_read("完成验证后，按下回车键以继续")
 
     async def login(self):
         await self.before_login()
@@ -163,23 +229,27 @@ class LoginResolver:
                     self._logger.warning("Cache is expired or device_type changed, ignore")
                     self.use_cache = False
         except:
+            self._logger.exception("fast-login failed")
             if self._client.connected:
                 await self._client.close()
                 await asyncio.sleep(1)
-            self._logger.exception("fast-login failed")
+
             self.login_cache_file.unlink(missing_ok=True)
             self.use_cache = False
 
-        if not self._client.connected:
-            await self._login()
+        if not self.use_cache or not self._client.connected:
+            if not await self._login():
+                await self._client.close()
+                return
 
-        self._logger.info("登录成功!")
         await self.after_login()
 
     async def before_login(self):
         pass
 
     async def after_login(self):
+        self._logger.info("登录成功!")
+
         with open(self.login_cache_file, "wb") as f:
             f.write(self._client.dump_token())
         self._logger.info("fast-login token saved")
