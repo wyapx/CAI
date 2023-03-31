@@ -185,6 +185,12 @@ requires_python = ">=3.7"
 summary = "Bring fast TEA cipher to Python. Powered by Rust."
 
 [[package]]
+name = "setuptools"
+version = "67.6.0"
+requires_python = ">=3.7"
+summary = "Easily download, build, install, upgrade, and uninstall Python packages"
+
+[[package]]
 name = "six"
 version = "1.16.0"
 requires_python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
@@ -319,7 +325,7 @@ summary = "Backport of pathlib-compatible object wrapper for zip files"
 
 [metadata]
 lock_version = "4.1"
-content_hash = "sha256:d247045a045a489d8de3be08b398d767560d5bd74f906a0bd0d5f31ba4d1d559"
+content_hash = "sha256:f295914fd7ce86b7c7ac2e224be33f8a0aff7dfa8b3226374ee1607f356916ff"
 
 [metadata.files]
 "alabaster 0.7.13" = [
@@ -672,6 +678,10 @@ content_hash = "sha256:d247045a045a489d8de3be08b398d767560d5bd74f906a0bd0d5f31ba
     {url = "https://pypi.tuna.tsinghua.edu.cn/packages/b6/fb/9678c73085ac565f4b70a4609df50c42e9cfd99b79b68e938aa310e53918/rtea-0.3.4.tar.gz", hash = "sha256:219b4a6e3932ab9443f919976f26b99d072cef9b25216be78cdbfa1821046512"},
     {url = "https://pypi.tuna.tsinghua.edu.cn/packages/c7/d7/0b61a854ed62fd92d698ec10d724017e26ddaf6507923af1ae2bd765aea6/rtea-0.3.4-cp37-abi3-win_amd64.whl", hash = "sha256:aaa043a3945a19f80f91dd99f0503938cfba2816b14883219e7aeebc76d4c60c"},
     {url = "https://pypi.tuna.tsinghua.edu.cn/packages/d4/29/a7a16cdd283f29202b38c58605c4fa4f38ea343e2374f912c1cd55bdc166/rtea-0.3.4-cp37-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:7d654fc0e7807bf08a02595d1c4a386ced7c3ea90bce69db85e9a11525b1e2db"},
+]
+"setuptools 67.6.0" = [
+    {url = "https://pypi.tuna.tsinghua.edu.cn/packages/25/f3/d68c20919bc774c6cb127f1762f2f2f999d700a58198556e883dd3700e58/setuptools-67.6.0.tar.gz", hash = "sha256:2ee892cd5f29f3373097f5a814697e397cf3ce313616df0af11231e2ad118077"},
+    {url = "https://pypi.tuna.tsinghua.edu.cn/packages/c3/9e/8a7ba2c9984a060daa6c6f9fff4d576b7ace3936239d6b771541eab972ed/setuptools-67.6.0-py3-none-any.whl", hash = "sha256:b78aaa36f6b90a074c1fa651168723acbf45d14cb1196b6f02c0fd07f17623b2"},
 ]
 "six 1.16.0" = [
     {url = "https://pypi.tuna.tsinghua.edu.cn/packages/71/39/171f1c67cd00715f190ba0b100d606d440a28c93c7714febeca8b79af85e/six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
