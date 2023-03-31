@@ -14,7 +14,7 @@ from typing import Union, BinaryIO, Optional, Sequence, Tuple, Dict, NoReturn, L
 
 from cai import log
 from cai.client import Session, OnlineStatus
-from cai.settings.device import get_device
+from cai.settings.device import get_device, DeviceInfo
 from cai.pb.msf.msg.svc import PbSendMsgResp
 from cai.client.highway import HighWaySession
 from cai.settings.protocol import get_apk_info, Protocols, ApkInfo
@@ -41,7 +41,13 @@ from .error import (
 )
 
 
-def _make_session(uin: int, passwd: Union[str, bytes], protocol: Optional[str] = None) -> Session:
+def _make_session(
+    uin: int,
+    passwd: Union[str, bytes],
+    protocol: Optional[str] = None,
+    *,
+    device: Optional[DeviceInfo] = None
+) -> Session:
     if not protocol:
         warnings.warn("Argument 'protocol' not set")
         apk_info = Protocols.Android.PAD
@@ -51,14 +57,15 @@ def _make_session(uin: int, passwd: Union[str, bytes], protocol: Optional[str] =
     else:
         apk_info = protocol
 
+    if not device:
+        device = get_device(uin)
+
     if not (isinstance(passwd, bytes) and len(passwd) == 16):
         # not a valid md5 passwd
         if isinstance(passwd, bytes):
             passwd = hashlib.md5(passwd).digest()
         else:
             passwd = hashlib.md5(passwd.encode()).digest()
-
-    device = get_device(uin)
 
     return Session(uin, passwd, device, apk_info)
 
@@ -69,8 +76,10 @@ class Client(_Login, _Friend, _Group, _Events):
         uin: int,
         passwd: Union[str, bytes],
         protocol: Union[ApkInfo, str, None] = None,
+        *,
+        device: Optional[DeviceInfo] = None
     ):
-        session = _make_session(uin, passwd, protocol=protocol)
+        session = _make_session(uin, passwd, protocol=protocol, device=device)
         self.session = session
         self._highway_session = HighWaySession(session, logger=log.highway)
         self._msg_fut: Dict[int, asyncio.Future] = {}  # rand: seq
