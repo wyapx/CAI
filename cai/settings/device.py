@@ -251,8 +251,10 @@ def get_device(uin: int, cache: bool = True) -> DeviceInfo:
                 device = new_device()
                 f.seek(0)
                 f.truncate(0)
-                device.to_file(f)
+                device.to_file(f, indent=2)
     else:
         device = new_device()
-        cache_file.write_text(device.to_json())
+        cache_file.write_text(
+            device.to_json(indent=2)
+        )
     return device
