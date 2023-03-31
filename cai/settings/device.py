@@ -236,7 +236,7 @@ def get_device(uin: int, cache: bool = True) -> DeviceInfo:
 
     device: DeviceInfo
     if cache and cache_file.exists():
-        with cache_file.open("r+") as f:
+        with cache_file.open("r") as f:
             try:
                 device = DeviceInfo.from_file(f)
             except Exception as e:
@@ -249,12 +249,37 @@ def get_device(uin: int, cache: bool = True) -> DeviceInfo:
                 f.seek(0)
                 backup_file.write_text(f.read())
                 device = new_device()
-                f.seek(0)
-                f.truncate(0)
-                device.to_file(f, indent=2)
+                save_device(
+                    uin,
+                    device,
+                    backup=True
+                )
     else:
         device = new_device()
-        cache_file.write_text(
-            device.to_json(indent=2)
+        save_device(
+            uin,
+            device
         )
     return device
+
+
+def save_device(
+    uin: int,
+    device: DeviceInfo,
+    backup=False,
+    indent=2
+):
+    cache_file = Storage.get_account_config_dir(uin) / "device.json"
+    backup_file = Storage.get_account_config_dir(uin) / "device.json.bak"
+
+    if cache_file.exists() and backup:
+        with cache_file.open("rb") as src_fp:
+            with backup_file.open("wb") as dst_fp:
+                dst_fp.write(
+                    src_fp.read()
+                )
+
+    with cache_file.open("w") as f:
+        f.write(
+            device.to_json(indent=indent)
+        )
