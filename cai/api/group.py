@@ -11,12 +11,13 @@ from typing import List, Union, Optional, Tuple
 
 from cai.api.error import BotException
 
-from cai.client import GroupMember
-from cai.client import Group as group_t, pkg_builder
+from cai.client import GroupMember, GroupMessage, pkg_builder
+from cai.client import Group as group_t
+from cai.client.message_service.decoders import TroopMessageDecoder
+from cai.client.pkg_builder import build_recall_group_msg_pkg
+from cai.pb.msf.msg.svc import PbMsgWithDrawResp, PbGetGroupMsgResp
 
 from .base import BaseAPI
-from ..client.pkg_builder import build_recall_group_msg_pkg
-from ..pb.msf.msg.svc import PbMsgWithDrawResp
 
 
 class Group(BaseAPI):
@@ -129,6 +130,33 @@ class Group(BaseAPI):
 
         if ret.result:
             raise BotException(ret.result, ret.errmsg)
+
+    async def get_group_msg(
+        self,
+        group_code: int,
+        begin_seq: int,
+        end_seq: int,
+        filter_recall_msg=True
+    ) -> List[GroupMessage]:
+        ret = PbGetGroupMsgResp.FromString(
+            (
+                await self.session.send_unipkg_and_wait(
+                    "MessageSvc.PbGetGroupMsg",
+                    pkg_builder.build_get_group_msg_req(
+                        group_code,
+                        begin_seq,
+                        end_seq
+                    ).SerializeToString()
+                )
+            ).data
+        )
+        if ret.result:
+            raise BotException(ret.result, ret.errmsg)
+
+        return [*(
+            TroopMessageDecoder.decode(msg) for msg in ret.msg
+            if filter_recall_msg and msg.head.time
+        )]
 
 
 __all__ = ["Group"]

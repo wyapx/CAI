@@ -19,7 +19,6 @@ from cai.client.packet import UniPacket, IncomingPacket
 from cai.pb.msf.msg.svc import PbGetMsgReq, PbDeleteMsgReq
 
 from .decoders import MESSAGE_DECODERS
-from ..events.common import PrivateMessage, GroupMessage
 from .command import (
     PushNotify,
     GetMessageFail,

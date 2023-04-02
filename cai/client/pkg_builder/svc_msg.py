@@ -6,7 +6,7 @@ from cai.pb.msf.msg.svc import (
     PbMsgWithDrawReq,
     MessageInfo,
     RoutingHead,
-    C2C
+    C2C, PbGetGroupMsgReq
 )
 
 
@@ -53,4 +53,18 @@ def build_recall_private_msg_pkg(
             long_message_flag=bool(is_long_msg),
             sub_cmd=1
         )]
+    )
+
+
+# get group msg from server, MessageSvc.PbGetGroupMsg
+def build_get_group_msg_req(
+    group_code: int,
+    begin_seq: int,
+    end_seq: int
+) -> PbGetGroupMsgReq:
+    return PbGetGroupMsgReq(
+        group_code=group_code,
+        begin_seq=begin_seq,
+        end_seq=end_seq,
+        public_group=False
     )
