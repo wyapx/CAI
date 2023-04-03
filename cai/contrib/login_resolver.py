@@ -96,7 +96,8 @@ class LoginResolver:
                     await self.on_login_device_locked(client, exc)
                 else:
                     raise
-            await client.login()
+            if not client.connected:
+                await client.login()
         except (
             LoginDeviceLocked,
             LoginSliderNeeded,
