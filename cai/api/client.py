@@ -17,6 +17,8 @@ from cai.client import Session, OnlineStatus
 from cai.settings.device import get_device, DeviceInfo
 from cai.pb.msf.msg.svc import PbSendMsgResp
 from cai.client.highway import HighWaySession
+from cai.client.highway.encoders import encode_get_ptt_url_req
+from cai.client.highway.decoders import decode_get_ptt_url_rsp
 from cai.settings.protocol import get_apk_info, Protocols, ApkInfo
 from cai.client.message_service.encoders import build_msg, make_msg_pkg
 from cai.client.events.common import GroupMessage
@@ -185,6 +187,25 @@ class Client(_Login, _Friend, _Group, _Events):
 
     async def upload_forward_msg(self, group_id: int, nodes: List[ForwardNode]) -> ForwardMessage:
         return await self._highway_session.upload_forward_msg(nodes, group_id)
+
+    async def get_voice_download_url(self, group_id: int, voice: VoiceElement) -> str:
+        req_pkg = encode_get_ptt_url_req(
+            group_id,
+            self.uin,  # f**k u, tx
+            voice.file_id,
+            voice.md5,
+            voice.group_file_key
+        )
+        rsp = decode_get_ptt_url_rsp(
+            (
+                await self.session.send_unipkg_and_wait(
+                    "PttStore.GroupPttDown",
+                    req_pkg.SerializeToString()
+                )
+            ).data
+        )
+        return f"https://{rsp.down_domain.decode()}{rsp.down_para.decode()}"
+
 
     async def close(self) -> NoReturn:
         """Stop Session"""

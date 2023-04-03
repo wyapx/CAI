@@ -1,3 +1,4 @@
+from cai.client import OnlineStatus
 from cai.client.session import Session
 
 
@@ -23,3 +24,18 @@ class BaseAPI:
     @property
     def uin(self) -> int:
         return self.session.uin
+
+    @property
+    def nick(self) -> str:
+        return self.session.nick
+
+    @property
+    def status(self) -> OnlineStatus:
+        return self.session.status
+
+    @property
+    def connected(self) -> bool:
+        return self.session.connected
+
+    async def wait_closed(self):
+        return await self.session.wait_closed()

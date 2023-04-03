@@ -1,6 +1,6 @@
 from typing import List, Tuple, Sequence
 
-from cai.pb.im.cs.cmd0x388 import RspBody
+from cai.pb.im.cs.cmd0x388 import RspBody, GetPttUrlRsp
 from cai.pb.highway.ptt_center import RspBody as VideoUpRsp
 
 from .utils import itoa
@@ -54,6 +54,13 @@ def decode_upload_ptt_resp(data: bytes) -> UploadResponse:
         uploadAddr=[(itoa(a), p) for a, p in zip(pkg.up_ip, pkg.up_port)],
         uploadKey=pkg.up_ukey,
     )
+
+
+def decode_get_ptt_url_rsp(data: bytes) -> GetPttUrlRsp:
+    pkg = decode_d388_rsp(data).getptt_url_rsp[0]
+    if pkg.result != 0:
+        raise ConnectionError(pkg.result, pkg.fail_msg)
+    return pkg
 
 
 def decode_d388_rsp(data: bytes) -> RspBody:

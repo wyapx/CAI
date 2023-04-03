@@ -250,7 +250,7 @@ class LoginResolver:
 
     async def after_login(self):
         self._logger.info(
-            f"{self._client.session.nick}({self._client.uin}) {self._client.device_type}登录成功!"
+            f"{self._client.nick}({self._client.uin}) {self._client.device_type}登录成功!"
         )
 
         with open(self.login_cache_file, "wb") as f:

@@ -153,6 +153,7 @@ class FlashImageElement(ImageElement):
 class VoiceElement(Element):
     file_name: str
     file_type: int
+    file_id: int
     from_uin: int
     md5: bytes
     size: int

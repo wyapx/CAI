@@ -70,7 +70,7 @@ class HighWaySession:
         ticket: bytes,
         ext=None,
         addrs: List[Tuple[str, int]] = None,
-        bs=8192
+        bs=65535
     ) -> Optional[bytes]:
         if not addrs:
             addrs = self._session_addr_list
@@ -146,6 +146,7 @@ class HighWaySession:
         return VoiceElement(
             to_id(fmd5) + ".amr",
             file_type=4,
+            file_id=ret.fileId,
             from_uin=self._client.uin,
             md5=fmd5,
             size=fl,
