@@ -315,10 +315,8 @@ class DeviceLocked(UnknownLoginStatus):
         self.t174 = _tlv_map.get(0x174)
         if self.t174:
             t178 = Packet(_tlv_map[0x178])
-            try:
-                self.sms_phone = t178.start().string(4).execute()[0]
-            except struct.error:
-                self.sms_phone = None
+            country_code, sms_phone = t178.start().string(2).string(2).execute()
+            self.sms_phone = f"+{country_code} {sms_phone}"
 
 
 @dataclass
