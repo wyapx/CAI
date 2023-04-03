@@ -249,7 +249,9 @@ class LoginResolver:
         pass
 
     async def after_login(self):
-        self._logger.info("登录成功!")
+        self._logger.info(
+            f"{self._client.session.nick}({self._client.uin}) {self._client.device_type}登录成功!"
+        )
 
         with open(self.login_cache_file, "wb") as f:
             f.write(self._client.dump_token())
