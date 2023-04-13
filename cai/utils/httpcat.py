@@ -78,6 +78,22 @@ class HttpCat:
         )
 
     @classmethod
+    async def _read_all(cls, header: dict, reader: asyncio.StreamReader) -> bytes:
+        if header.get("Transfer-Encoding") == "chunked":
+            bs = bytearray()
+            while True:
+                length = int(await cls._read_line(reader) or "0", 16)
+                if length:
+                    bs += await reader.readexactly(length)
+                else:
+                    break
+            return bytes(bs)
+        elif "Content-Length" in header:
+            return await reader.readexactly(int(header["Content-Length"]))
+        else:
+            return await reader.read()
+
+    @classmethod
     async def _parse_response(cls, reader: asyncio.StreamReader) -> HttpResponse:
         stat = await cls._read_line(reader)
         if not stat:
@@ -100,8 +116,7 @@ class HttpCat:
             int(code),
             status,
             header,
-            await reader.read() if "Content-Length" not in header
-            else await reader.readexactly(int(header["Content-Length"])),
+            await cls._read_all(header, reader),
             cookies
         )
 
