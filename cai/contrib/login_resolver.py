@@ -155,9 +155,9 @@ class LoginResolver:
     async def on_login_slider_needed(self, client: Client, exc: LoginSliderNeeded):
         url = exc.verify_url.replace("ssl.captcha.qq.com", "txhelper.glitch.me")
         print("本次操作需要进行滑块验证(留空可使用TxCaptchaHelper)")
-        print("验证地址:", url)
+        print("验证地址:", exc.verify_url)
         async_input = await _connect_async_stdin()
-        ticket = (await async_input("输入获取到的验证码 -> ")).strip()
+        ticket = (await async_input("输入获取到的验证码 -> ")).strip().decode()
         if not ticket:
             print("将使用TxCaptchaHelper，请等待")
             resp = await HttpCat.request("GET", url)
