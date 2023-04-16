@@ -87,7 +87,7 @@ def _fill_forward_msg_tpl(res_id: str, filename: str, msg_len: int, brief: str) 
            f'</item><source name="聊天记录？" icon="" action="" appid="-1" /></msg>'.encode()
 
 
-def build_msg(elements: Sequence[models.Element]) -> MsgBody:
+def build_msg(elements: Sequence[models.Element], compatible=True) -> MsgBody:
     ret = []
     ptt = None
     for e in elements:  # todo: support more element
@@ -104,9 +104,10 @@ def build_msg(elements: Sequence[models.Element]) -> MsgBody:
                     )
                 )
             )
-            ret.append(  # fallback info
-                Elem(text=PlainText(str="[闪照]请使用新版手机QQ查看".encode()))
-            )
+            if compatible:
+                ret.append(  # fallback info
+                    Elem(text=PlainText(str="[闪照]请使用新版手机QQ查看".encode()))
+                )
         elif isinstance(e, models.ImageElement):
             if e.filetype >= 2000:
                 e.is_emoji = True
@@ -169,6 +170,9 @@ def build_msg(elements: Sequence[models.Element]) -> MsgBody:
             )
         elif isinstance(e, models.VoiceElement):
             ptt = e._to_ptt()
+            ret.append(  # fallback info
+                Elem(text=PlainText(str="[语音消息]暂不支持查看".encode()))
+            )
             break
         elif isinstance(e, models.VideoElement):
             ret.append(
@@ -188,9 +192,10 @@ def build_msg(elements: Sequence[models.Element]) -> MsgBody:
                     )
                 )
             )
-            ret.append(  # fallback info
-                Elem(text=PlainText(str="[视频短片]请使用新版手机QQ查看".encode()))
-            )
+            if compatible:
+                ret.append(  # fallback info
+                    Elem(text=PlainText(str="[视频短片]请使用新版手机QQ查看".encode()))
+                )
         elif isinstance(e, models.ReplyElement):
             display = f"@{e.sender}"
             ret.append(
@@ -204,14 +209,15 @@ def build_msg(elements: Sequence[models.Element]) -> MsgBody:
                     )
                 )
             )
-            ret.append(
-                Elem(
-                    text=PlainText(
-                        str=display.encode(),
-                        attr_6_buf=struct.pack("!xb3xbbI2x", 1, len(display), 0, e.sender)
+            if compatible:
+                ret.append(
+                    Elem(
+                        text=PlainText(
+                            str=display.encode(),
+                            attr_6_buf=struct.pack("!xb3xbbI2x", 1, len(display), 0, e.sender)
+                        )
                     )
                 )
-            )
         elif isinstance(e, models.ForwardMessage):
             ret.append(
                 _build_rich_msg(

@@ -41,6 +41,6 @@ def pack(fm: List["ForwardNode"], seq: int, group: int, random: int) -> List[Msg
                     group_card=node.nickname.encode()
                 )
             ),
-            body=build_msg(node.message)
+            body=build_msg(node.message, compatible=False)
         ) for node in fm
     ]
