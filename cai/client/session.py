@@ -1131,7 +1131,7 @@ class Session:
             if not isinstance(response, Heartbeat):
                 raise RuntimeError("Invalid heartbeat response type!")
         except (ConnectionError, asyncio.TimeoutError) as e:
-            log.network.error(f"Heartbeat.Alive: failed", exc_info=e)
+            log.network.error(f"Heartbeat.Alive: failed by {e}")
             return False
         return True
 
