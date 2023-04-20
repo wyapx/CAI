@@ -532,15 +532,22 @@ class Session:
         while self.connected:
             try:
                 length: int = (
-                    struct.unpack(">i", await self.connection.read_bytes(4))[0]
-                    - 4
+                    struct.unpack(
+                        ">i",
+                        asyncio.wait_for(await self.connection.read_bytes(4), 60)
+                    )[0] - 4
                 )
-                # FIXME: length < 0 ?
 
                 data = await self.connection.read_bytes(length)
             except ConnectionError as e:
                 log.logger.warning(f"{self.uin} connection lost: {str(e)}")
                 break
+            except asyncio.TimeoutError:
+                if await self._do_heartbeat():
+                    continue
+                else:
+                    log.logger.warning(f"{self.uin} connection lost: heartbeat not response")
+                    break
 
             try:
                 packet = IncomingPacket.parse(
@@ -1105,6 +1112,29 @@ class Session:
             response.uin, response.seq, response.ret_code, response.command_name
         )
 
+    async def _do_heartbeat(self) -> bool:
+        """send heartbeat request.
+        Returns: false when request fail"""
+        seq = self.next_seq()
+        packet = encode_heartbeat(
+            seq,
+            self._session_id,
+            self.device.imei,
+            self._ksid,
+            self.uin,
+            self.apk_info.sub_app_id,
+        )
+        try:
+            response = await self.send_and_wait(
+                seq, "Heartbeat.Alive", packet
+            )
+            if not isinstance(response, Heartbeat):
+                raise RuntimeError("Invalid heartbeat response type!")
+        except (ConnectionError, asyncio.TimeoutError) as e:
+            log.network.error(f"Heartbeat.Alive: failed", exc_info=e)
+            return False
+        return True
+
     async def heartbeat(self) -> None:
         """Do heartbeat.
 
@@ -1124,23 +1154,7 @@ class Session:
         self._heartbeat_enabled = True
 
         while self._heartbeat_enabled and self.connected:
-            seq = self.next_seq()
-            packet = encode_heartbeat(
-                seq,
-                self._session_id,
-                self.device.imei,
-                self._ksid,
-                self.uin,
-                self.apk_info.sub_app_id,
-            )
-            try:
-                response = await self.send_and_wait(
-                    seq, "Heartbeat.Alive", packet
-                )
-                if not isinstance(response, Heartbeat):
-                    raise RuntimeError("Invalid heartbeat response type!")
-            except (ConnectionError, asyncio.TimeoutError) as e:
-                log.network.error(f"Heartbeat.Alive: failed by {str(e)}")
+            if not await self._do_heartbeat():
                 break
             await asyncio.sleep(self._heartbeat_interval)
 
