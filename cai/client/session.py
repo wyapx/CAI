@@ -534,7 +534,7 @@ class Session:
                 length: int = (
                     struct.unpack(
                         ">i",
-                        asyncio.wait_for(await self.connection.read_bytes(4), 60)
+                        await asyncio.wait_for(self.connection.read_bytes(4), 60)
                     )[0] - 4
                 )
 
