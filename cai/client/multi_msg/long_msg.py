@@ -1,18 +1,15 @@
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Tuple
 
-from cai.client import Command
 from cai.pb.highway.long_msg.long_msg_pb2 import LongReqBody, LongMsgUpReq
 from cai.pb.highway.multi_msg.multi_msg_pb2 import (
     MultiReqBody,
-    MultiRspBody,
     MultiMsgApplyUpReq,
     MultiMsgApplyUpRsp,
 )
 
 if TYPE_CHECKING:
     from cai.client.session import Session
-    from cai.client.packet import IncomingPacket
+    from .command import MultiApplyResp
 
 
 def _encode_multi_req_body(
@@ -33,11 +30,6 @@ def _encode_multi_req_body(
     )
 
 
-@dataclass
-class MultiApplyResp(Command):
-    data: MultiMsgApplyUpRsp
-
-
 async def build_multi_apply_up_pkg(
     client: "Session",
     group_id: int,
@@ -45,7 +37,7 @@ async def build_multi_apply_up_pkg(
     data_md5: bytes,
     bu_type: int
 ) -> Tuple[LongReqBody, MultiMsgApplyUpRsp]:
-    body: MultiApplyResp = await client.send_unipkg_and_wait(
+    body: "MultiApplyResp" = await client.send_unipkg_and_wait(
         "MultiMsg.ApplyUp",
         _encode_multi_req_body(
             group_id, len(data), data_md5, bu_type
@@ -65,18 +57,3 @@ async def build_multi_apply_up_pkg(
             )
         ],
     ), body.data
-
-
-async def handle_multi_resp_body(
-    client: "Session", pkg: "IncomingPacket"
-) -> MultiApplyResp:
-    mrb = MultiRspBody.FromString(pkg.data).multimsgApplyupRsp
-    if not mrb:
-        raise ConnectionError("no MultiMsgApplyUpRsp Found")
-    return MultiApplyResp(
-        uin=pkg.uin,
-        seq=pkg.seq,
-        ret_code=pkg.ret_code,
-        command_name=pkg.command_name,
-        data=mrb[0],
-    )

@@ -1,17 +1,21 @@
 import gzip
 import hashlib
-from typing import List, TYPE_CHECKING, Tuple
+from typing import List, Tuple, TYPE_CHECKING
 
+
+from cai.client.message_service.models import ForwardNode, ForwardMessage
+from cai.client.message_service.decoders import TroopMessageDecoder
 from cai.client.message_service.encoders import build_msg
+from cai.pb.highway.multi_msg import MultiReqBody, MultiMsgApplyDownReq
 from cai.pb.msf.msg.comm import Msg, MsgHead, MutilTransHead, GroupInfo
 from cai.pb.msf.msg.svc import PbMultiMsgTransmit, PbMultiMsgItem, PbMultiMsgNew
 
 if TYPE_CHECKING:
-    from cai.client.message_service.models import ForwardNode
+    from cai.client import GroupMessage
 
 
-def prepare(fm: List["ForwardNode"], seq: int, group: int, random: int) -> Tuple[bytes, bytes]:
-    msgs = pack(fm, seq, group, random)
+def prepare_upload(fm: List[ForwardNode], seq: int, group: int, random: int) -> Tuple[bytes, bytes]:
+    msgs = _pack(fm, seq, group, random)
     raw = PbMultiMsgTransmit(
         msg=msgs,
         pbItemList=[
@@ -25,7 +29,48 @@ def prepare(fm: List["ForwardNode"], seq: int, group: int, random: int) -> Tuple
     return data, hashlib.md5(data).digest()
 
 
-def pack(fm: List["ForwardNode"], seq: int, group: int, random: int) -> List[Msg]:
+def prepare_download_req(res_id: bytes) -> bytes:
+    """UniPacket, MultiMsg.ApplyDown"""
+    return MultiReqBody(
+        subcmd=2,
+        termType=5,
+        platformType=9,
+        netType=3,
+        buildVer="8.2.0.1297",
+        buType=2,
+        reqChannelType=2,
+        multimsgApplydownReq=[MultiMsgApplyDownReq(
+            msgResid=res_id,
+            msgType=3
+        )]
+    ).SerializeToString()
+
+
+def parse_raw(transmit: PbMultiMsgTransmit, res_id: str) -> ForwardMessage:
+    return ForwardMessage(
+        transmit.msg[0].head.group_info.group_code,
+        res_id,
+        "",
+        _unpack(transmit)
+    )
+
+
+def _unpack(transmit: PbMultiMsgTransmit) -> List[ForwardNode]:
+    msgs: List[ForwardNode] = []
+    for msg in transmit.msg:
+        tmsg: "GroupMessage" = TroopMessageDecoder.decode(msg)  # noqa
+        msgs.append(
+            ForwardNode(
+                from_uin=tmsg.from_uin,
+                nickname=tmsg.from_group_card,
+                send_time=tmsg.time,
+                message=tmsg.message
+            )
+        )
+    return msgs
+
+
+def _pack(fm: List[ForwardNode], seq: int, group: int, random: int) -> List[Msg]:
     """internal function"""
     return [
         Msg(

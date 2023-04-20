@@ -54,7 +54,7 @@ from .events.common import BotOnlineEvent, BotOfflineEvent
 from .packet import UniPacket, IncomingPacket
 from .command import Command, _packet_to_command
 from .sso_server import SsoServer, get_sso_server
-from .multi_msg.long_msg import handle_multi_resp_body
+from .multi_msg import handle_multi_resp_body, handle_multi_msg_apply_down
 from .heartbeat import Heartbeat, encode_heartbeat, handle_heartbeat
 from .models import Group, Friend, SigInfo, FriendGroup, GroupMember
 from .config_push import FileServerPushList, handle_config_push_request
@@ -139,6 +139,7 @@ HANDLERS: Dict[str, HT] = {
     "OnlinePush.PbPushC2CMsg": handle_push_msg,
     # "OnlinePush.PbPushBindUinGroupMsg": handle_push_msg,  # subaccount
     "MultiMsg.ApplyUp": handle_multi_resp_body,
+    "MultiMsg.ApplyDown": handle_multi_msg_apply_down,
     "OnlinePush.ReqPush": handle_req_push,
     "OnlinePush.PbPushTransMsg": handle_push_trans_msg
 }

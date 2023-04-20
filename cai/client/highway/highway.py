@@ -16,7 +16,7 @@ from .frame import read_frame, write_frame
 from .utils import to_id, timeit, calc_file_md5_and_length
 from ..message_service.models import ImageElement, VoiceElement, VideoElement, ForwardNode, ForwardMessage
 from .decoders import decode_upload_ptt_resp, decode_upload_image_resp, decode_video_upload_resp, parse_addr
-from ..multi_msg.forward import prepare
+from ..multi_msg.forward import prepare_upload
 from ..multi_msg.long_msg import build_multi_apply_up_pkg
 
 if TYPE_CHECKING:
@@ -202,7 +202,7 @@ class HighWaySession:
         )
 
     async def upload_forward_msg(self, forward: List[ForwardNode], gid: int) -> ForwardMessage:
-        data, fmd5 = prepare(forward, 0, gid, random.randint(3000000, 80000000))
+        data, fmd5 = prepare_upload(forward, 0, gid, random.randint(3000000, 80000000))
         body, resp = await build_multi_apply_up_pkg(self._client, gid, data, fmd5, 2)
         if resp.result:
             raise ConnectionError(resp.result)
