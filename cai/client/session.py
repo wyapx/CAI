@@ -523,6 +523,11 @@ class Session:
             # TODO: handle exception
             log.logger.exception(e)
 
+    async def _active_keepalive(self, ct: asyncio.Task):
+        if not await self._do_heartbeat():
+            log.logger.warning(f"{self.uin} connection lost: heartbeat not response")
+            ct.cancel("heartbeat not response")
+
     async def receive(self):
         """Receive data from connection reader and store it in sequence future.
 
@@ -543,11 +548,12 @@ class Session:
                 log.logger.warning(f"{self.uin} connection lost: {str(e)}")
                 break
             except asyncio.TimeoutError:
-                if await self._do_heartbeat():
-                    continue
-                else:
-                    log.logger.warning(f"{self.uin} connection lost: heartbeat not response")
-                    break
+                asyncio.create_task(
+                    self._active_keepalive(
+                        asyncio.current_task()
+                    )
+                )
+                continue
 
             try:
                 packet = IncomingPacket.parse(
