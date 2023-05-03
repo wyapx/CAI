@@ -2,7 +2,6 @@ import gzip
 import hashlib
 from typing import List, Tuple, TYPE_CHECKING
 
-
 from cai.client.message_service.models import ForwardNode, ForwardMessage
 from cai.client.message_service.decoders import TroopMessageDecoder
 from cai.client.message_service.encoders import build_msg
@@ -22,6 +21,17 @@ def prepare_upload(fm: List[ForwardNode], seq: int, group: int, random: int) -> 
             PbMultiMsgItem(
                 fileName="MultiMsg",
                 buffer=PbMultiMsgNew(msg=msgs).SerializeToString()
+            ),
+            *(
+                PbMultiMsgItem(
+                    fileName=x.message[0].file_name,
+                    buffer=PbMultiMsgNew(
+                        msg=_pack(
+                            x.message[0].nodes, 0,
+                            x.message[0].from_group,
+                            random
+                        )).SerializeToString()
+                ) for x in filter(lambda m: isinstance(m.message[0], ForwardMessage), fm)  # type: ForwardMessage
             )
         ]
     ).SerializeToString()
@@ -57,8 +67,19 @@ def parse_raw(transmit: PbMultiMsgTransmit, res_id: str) -> ForwardMessage:
 
 def _unpack(transmit: PbMultiMsgTransmit) -> List[ForwardNode]:
     msgs: List[ForwardNode] = []
-    for msg in transmit.msg:
+    tm: List[Tuple[str, PbMultiMsgTransmit]] = [
+        (s.fileName, PbMultiMsgTransmit.FromString(s.buffer))
+        for s in transmit.pbItemList
+    ]
+
+    for msg in tm[0][1].msg:
         tmsg: "GroupMessage" = TroopMessageDecoder.decode(msg)  # noqa
+        m0 = tmsg.message[0]
+        if isinstance(m0, ForwardMessage):
+            for (fn, tsm) in tm:
+                if fn == m0.file_name:
+                    m0.nodes = tsm.msg
+
         msgs.append(
             ForwardNode(
                 from_uin=tmsg.from_uin,
