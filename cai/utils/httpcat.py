@@ -129,8 +129,11 @@ class HttpCat:
         header: Dict[str, str] = None,
         body: bytes = None,
         cookies: Dict[str, str] = None,
-        ssl: bool = False
+        ssl: bool = False,
+        loop: asyncio.AbstractEventLoop = None
     ) -> HttpResponse:
+        if not loop:
+            loop = asyncio.get_running_loop()
         header = {
             "Host": address[0],
             "Connection": "close",
@@ -155,7 +158,7 @@ class HttpCat:
         try:
             return await cls._parse_response(reader)
         finally:
-            writer.close()
+            loop.call_soon(writer.close)
 
     @classmethod
     async def request(
@@ -165,7 +168,8 @@ class HttpCat:
         header: Dict[str, str] = None,
         body: bytes = None,
         cookies: Dict[str, str] = None,
-        follow_redirect=True
+        follow_redirect=True,
+        loop: asyncio.AbstractEventLoop = None
     ) -> HttpResponse:
         address, path, ssl = cls._parse_url(url)
         resp = await cls._request(
@@ -175,7 +179,8 @@ class HttpCat:
             header,
             body,
             cookies,
-            ssl
+            ssl,
+            loop
         )
         _logger.debug(f"request: {method} {url} {resp.code}")
         if resp.code // 100 == 3 and follow_redirect:
