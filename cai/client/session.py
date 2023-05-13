@@ -309,7 +309,7 @@ class Session:
     async def wait_closed(self):
         await self._closed.wait()
 
-    def _destroy_all_task(self):
+    def _destroy_all_task(self, *_):
         current = asyncio.current_task()
         for task in self._task_store:
             if task != current:
