@@ -22,6 +22,7 @@ from typing import (
     Callable,
     Optional,
     Awaitable,
+    Coroutine,
     overload,
 )
 
@@ -112,7 +113,8 @@ from .wtlogin import (
     encode_exchange_emp_15,
     encode_login_request20,
     encode_login_request2_slider,
-    encode_login_request2_captcha, encode_login_request11,
+    encode_login_request2_captcha,
+    encode_login_request11,
 )
 
 HT = Callable[["Session", IncomingPacket], Awaitable[Command]]
@@ -200,6 +202,7 @@ class Session:
 
         self._init_flag: bool = False
         self._listeners: Set[LT] = set()
+        self._task_store: Set[asyncio.Task] = set()
         self._siginfo: SigInfo = SigInfo()
         self._sync_cookie: bytes = bytes()
         self._pubaccount_cookie: bytes = bytes()
@@ -306,6 +309,20 @@ class Session:
     async def wait_closed(self):
         await self._closed.wait()
 
+    def _destroy_all_task(self):
+        current = asyncio.current_task()
+        for task in self._task_store:
+            if task != current:
+                task.cancel()
+
+    def create_task(self, coro: Coroutine[Any, Any, None], task_name=None, critical=False) -> asyncio.Task:
+        task = asyncio.create_task(coro, name=task_name)
+        self._task_store.add(task)
+        task.add_done_callback(lambda t: self._task_store.remove(t))
+        if critical:
+            task.add_done_callback(self._destroy_all_task)
+        return task
+
     async def connect(self, server: Optional[SsoServer] = None) -> None:
         """Connect to the server.
 
@@ -339,7 +356,7 @@ class Session:
             )
 
     def _start_receiver(self):
-        task = asyncio.create_task(self.receive())
+        task = self.create_task(self.receive(), critical=True)
         task.add_done_callback(self._recv_done_cb)
 
     def _recv_done_cb(self, task: asyncio.Task):
@@ -352,10 +369,10 @@ class Session:
         if self._reconnect:
             log.network.warning("receiver stopped, try to reconnect")
             self._reconnect_times += 1
-            asyncio.create_task(self.reconnect_and_login())
+            self.create_task(self.reconnect_and_login())
         else:
             log.network.warning("receiver stopped")
-            asyncio.create_task(self.close())
+            self.create_task(self.close())
 
     async def disconnect(self) -> None:
         """Disconnect if already connected to the server."""
@@ -374,7 +391,7 @@ class Session:
             server (Optional[SsoServer], optional): Which server you want to connect to. Defaults to None.
         """
 
-        log.network.debug("reconnecting...")
+        log.network.debug(f"reconnecting to {self._connection.host}:{self._connection.port}...")
         if not change_server and self._connection:
             await self._connection.reconnect()
             self._start_receiver()
@@ -427,6 +444,8 @@ class Session:
 
         # clear waiting packet
         self._receive_store.cancel_all()
+        # destroy tasks
+        self._destroy_all_task()
         # disconnect server
         await self.disconnect()
         self._closed.set()
@@ -548,7 +567,7 @@ class Session:
                 log.logger.warning(f"{self.uin} connection lost: {str(e)}")
                 break
             except asyncio.TimeoutError:
-                asyncio.create_task(
+                self.create_task(
                     self._active_keepalive(
                         asyncio.current_task()
                     )
@@ -566,7 +585,7 @@ class Session:
                     f"(receive: {packet.seq}): {packet.command_name}"
                 )
                 # do not block receive
-                asyncio.create_task(self._handle_incoming_packet(packet))
+                self.create_task(self._handle_incoming_packet(packet))
             except:
                 log.logger.exception("Unexpected error raised")
 
@@ -584,7 +603,7 @@ class Session:
         if event.type not in ("group_message", "private_message", "temp_message"):  # log filter
             log.logger.debug(f"Event {event.type} was trigged")
         for listener in self.listeners:
-            asyncio.create_task(self._run_listener(listener, event))
+            self.create_task(self._run_listener(listener, event))
 
     def add_event_listener(self, listener: LT) -> None:
         """Add event listener for this session.
@@ -600,6 +619,8 @@ class Session:
         if not isinstance(response, OICQResponse):
             raise RuntimeError("Invalid login response type!")
 
+        auto_reconnect = self._reconnect
+        self._reconnect = False  # disable auto_reconnect temporary
         if not isinstance(response, UnknownLoginStatus):
             raise ApiResponseError(
                 response.uin,
@@ -610,6 +631,7 @@ class Session:
 
         if isinstance(response, LoginSuccess):
             log.logger.debug(f"{self.nick}({self.uin}) 登录成功！")
+            self._reconnect = auto_reconnect
             await self._init()
             self.dispatch_event(BotOnlineEvent(
                 qq=self.uin
@@ -1057,7 +1079,7 @@ class Session:
                 response.uin, response.ret_code, response.message or ""
             )
         elif isinstance(response, RegisterSuccess):
-            asyncio.create_task(self.heartbeat())
+            self.create_task(self.heartbeat(), critical=True)
             return response
 
         raise ApiResponseError(
