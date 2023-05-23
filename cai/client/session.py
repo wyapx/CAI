@@ -311,6 +311,8 @@ class Session:
         await self._closed.wait()
 
     def _destroy_all_task(self, current: Optional[asyncio.Task] = None):
+        if not current:
+            current = asyncio.current_task()
         for critical, task_list in enumerate(list(self._task_store)):
             for task in list(task_list):
                 if critical and not task.cancelled():
@@ -323,7 +325,7 @@ class Session:
 
         self._task_store[critical].add(task)
         task.add_done_callback(
-            lambda t: self._task_store[critical].remove(t)
+            self._task_store[critical].remove
         )
         if critical:
             task.add_done_callback(self._destroy_all_task)
