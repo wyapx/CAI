@@ -24,6 +24,7 @@ from typing import (
     Awaitable,
     Coroutine,
     overload,
+    Tuple,
 )
 
 from cachetools import TTLCache
@@ -202,7 +203,7 @@ class Session:
 
         self._init_flag: bool = False
         self._listeners: Set[LT] = set()
-        self._task_store: Set[asyncio.Task] = set()
+        self._task_store: Tuple[Set[asyncio.Task], Set[asyncio.Task]] = (set(), set())
         self._siginfo: SigInfo = SigInfo()
         self._sync_cookie: bytes = bytes()
         self._pubaccount_cookie: bytes = bytes()
@@ -309,16 +310,21 @@ class Session:
     async def wait_closed(self):
         await self._closed.wait()
 
-    def _destroy_all_task(self, *_):
-        current = asyncio.current_task()
-        for task in self._task_store:
-            if task != current:
-                task.cancel()
+    def _destroy_all_task(self, current: Optional[asyncio.Task] = None):
+        for critical, task_list in enumerate(list(self._task_store)):
+            for task in list(task_list):
+                if critical and not task.cancelled():
+                    task.remove_done_callback(self._destroy_all_task)
+                elif task != current:
+                    task.cancel()
 
     def create_task(self, coro: Coroutine[Any, Any, None], task_name=None, critical=False) -> asyncio.Task:
         task = asyncio.create_task(coro, name=task_name)
-        self._task_store.add(task)
-        task.add_done_callback(lambda t: self._task_store.remove(t))
+
+        self._task_store[critical].add(task)
+        task.add_done_callback(
+            lambda t: self._task_store[critical].remove(t)
+        )
         if critical:
             task.add_done_callback(self._destroy_all_task)
         return task
@@ -365,11 +371,10 @@ class Session:
             qq=self.uin,
             reconnect=self._reconnect
         ))
-        task.cancel()
         if self._reconnect:
             log.network.warning("receiver stopped, try to reconnect")
             self._reconnect_times += 1
-            self.create_task(self.reconnect_and_login())
+            self.create_task(self.reconnect_and_login(), critical=True)
         else:
             log.network.warning("receiver stopped")
             self.create_task(self.close())
