@@ -9,6 +9,8 @@ This module is used to control session actions (low-level api).
     https://github.com/cscs181/CAI/blob/master/LICENSE
 """
 import hashlib
+import itertools
+import logging
 import time
 import struct
 import asyncio
@@ -310,6 +312,10 @@ class Session:
     async def wait_closed(self):
         await self._closed.wait()
 
+    async def _wait_task_complete(self, timeout: int):
+        await asyncio.wait(itertools.chain(*self._task_store), timeout=timeout)
+        self._destroy_all_task()
+
     def _destroy_all_task(self, current: Optional[asyncio.Task] = None):
         if not current:
             current = asyncio.current_task()
@@ -347,12 +353,13 @@ class Session:
             raise RuntimeError("Already connected to the server")
         elif self.closed:
             self._closed.clear()  # reopen
-        log.network.debug("Getting Sso server")
-        _server = server or await get_sso_server()
-        log.logger.info(f"Connecting to server: {_server.host}:{_server.port}")
+        if not server:
+            log.network.debug("Getting Sso server")
+            server = await get_sso_server()
+        log.logger.info(f"Connecting to server: {server.host}:{server.port}")
         try:
             self._connection = await connect(
-                _server.host, _server.port, ssl=False, timeout=3.0
+                server.host, server.port, ssl=False, timeout=3.0
             )
             self._start_receiver()
         except ConnectionError:
@@ -360,7 +367,7 @@ class Session:
         except Exception as e:
             raise ConnectionError(
                 "An error occurred while connecting to "
-                f"server({_server.host}:{_server.port}): " + repr(e)
+                f"server({server.host}:{server.port}): " + repr(e)
             )
 
     def _start_receiver(self):
@@ -388,7 +395,7 @@ class Session:
 
     async def reconnect(
         self, change_server: bool = False, server: Optional[SsoServer] = None
-    ) -> None:
+    ) -> bool:
         """Reconnect to the server.
 
         The ``server`` arg only take effect if ``change_server`` is True.
@@ -398,9 +405,13 @@ class Session:
             server (Optional[SsoServer], optional): Which server you want to connect to. Defaults to None.
         """
 
-        log.network.debug(f"reconnecting to {self._connection.host}:{self._connection.port}...")
         if not change_server and self._connection:
-            await self._connection.reconnect()
+            log.network.debug(f"reconnecting to {self._connection.host}:{self._connection.port}...")
+            try:
+                await self._connection.reconnect()
+            except ConnectionError:
+                logging.warning("reconnect fail, retrying")
+                return await self.reconnect(change_server=True)
             self._start_receiver()
         else:
             exclude = (
@@ -408,32 +419,41 @@ class Session:
                 if change_server and self._connection
                 else []
             )
-            _server = server or await get_sso_server(
-                cache=False, cache_server_list=True, exclude=exclude
-            )
-            await self.disconnect()
-            await self.connect(_server)
+            try:
+                _server = server or await get_sso_server(
+                    cache=False, cache_server_list=True, exclude=exclude
+                )
+                await self.disconnect()
+                log.network.debug(f"connecting to {_server.host}:{_server.port}...")
+                await self.connect(_server)
+            except OSError:
+                logging.critical("network fail")
+                self.dispatch_event(BotOfflineEvent(
+                    self.uin,
+                    False
+                ))
+                await self.close()
+                return False
         log.network.debug("reconnected")
+        return True
 
     async def reconnect_and_login(
         self, change_server: bool = False, server: Optional[SsoServer] = None
     ) -> None:
         self._receive_store.cancel_all()
-        # Todo: retry after reconnect fail
-        await self.reconnect(change_server=change_server, server=server)
-        # FIXME: register reason msfByNetChange?
-        try:
-            await self._init(drop_offline_msg=False)
-        except asyncio.TimeoutError:
-            log.network.warning("register failed, trying to re-login")
-            await self.reconnect(change_server=change_server, server=server)
-            await self.login()
-        if self.connected:
-            self.dispatch_event(BotOnlineEvent(
-                qq=self.uin
-            ))
-        else:
-            log.network.error("reconnect fail")
+        if await self.reconnect(change_server=change_server, server=server):
+            try:
+                await self._init(drop_offline_msg=False)
+            except asyncio.TimeoutError:
+                log.network.warning("register failed, trying to re-login")
+                await self.reconnect(change_server=change_server, server=server)
+                await self.login()
+            if self.connected:
+                self.dispatch_event(BotOnlineEvent(
+                    qq=self.uin
+                ))
+            else:
+                log.network.error("reconnect fail")
 
     async def close(self) -> None:
         """Close the session and logout."""
@@ -452,7 +472,7 @@ class Session:
         # clear waiting packet
         self._receive_store.cancel_all()
         # destroy tasks
-        self._destroy_all_task()
+        await self._wait_task_complete(3)
         # disconnect server
         await self.disconnect()
         self._closed.set()
@@ -1166,7 +1186,7 @@ class Session:
             if not isinstance(response, Heartbeat):
                 raise RuntimeError("Invalid heartbeat response type!")
         except (ConnectionError, asyncio.TimeoutError) as e:
-            log.network.error(f"Heartbeat.Alive: failed by {e}")
+            log.network.warning(f"Heartbeat.Alive: failed by {e}")
             return False
         return True
 

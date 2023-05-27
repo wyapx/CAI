@@ -172,5 +172,7 @@ async def get_sso_server(
         server for server in servers if server.host not in exclude_server
     )
     success_servers.sort(key=lambda x: x[1])
+    if not success_servers:
+        raise ConnectionError("all sso_server failure, check your network connection")
     _cached_server = success_servers[0][0]
     return _cached_server
