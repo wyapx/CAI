@@ -268,6 +268,18 @@ class IncomingPacket:
             )
 
         compressed_data = data.start().bytes_with_length(4, 4).execute()[0]
+        # wtf tx
+        if not compressed_data:  # fix need A2 and D2
+            return cls(
+                seq=seq,
+                ret_code=ret_code,
+                extra=extra,
+                command_name=command_name,
+                session_id=session_id,
+                data=bytes(),
+                **kwargs,
+            )
+
         decompressed_data: bytes
         if compress_type == 0:
             decompressed_data = compressed_data
