@@ -186,6 +186,7 @@ class Session:
         self._session_id: bytes = secrets.token_bytes(4)  # bytes([0x02, 0xB0, 0x5B, 0x8B])
         self._connection: Optional[Connection] = None
         self._heartbeat_interval: int = 300
+        self._last_heartbeat_time: int = 0
         self._heartbeat_enabled: bool = False
         self._file_storage_info: Optional[FileServerPushList] = None
 
@@ -331,7 +332,7 @@ class Session:
 
         self._task_store[critical].add(task)
         task.add_done_callback(
-            self._task_store[critical].remove
+            self._task_store[critical].discard
         )
         if critical:
             task.add_done_callback(self._destroy_all_task)
@@ -569,12 +570,14 @@ class Session:
             # TODO: handle exception
             log.logger.exception(e)
 
-    async def _active_keepalive(self, ct: asyncio.Task):
+    async def _active_keepalive(self, ct: asyncio.Task, iv: int):
+        if self._last_heartbeat_time < time.time() - iv:
+            pass
         if not await self._do_heartbeat():
             log.logger.warning(f"{self.uin} connection lost: heartbeat not response")
             ct.cancel("heartbeat not response")
 
-    async def receive(self):
+    async def receive(self, max_loop_time=60):
         """Receive data from connection reader and store it in sequence future.
 
         Note:
@@ -585,7 +588,7 @@ class Session:
                 length: int = (
                     struct.unpack(
                         ">i",
-                        await asyncio.wait_for(self.connection.read_bytes(4), 60)
+                        await asyncio.wait_for(self.connection.read_bytes(4), max_loop_time)
                     )[0] - 4
                 )
 
@@ -596,7 +599,8 @@ class Session:
             except asyncio.TimeoutError:
                 self.create_task(
                     self._active_keepalive(
-                        asyncio.current_task()
+                        asyncio.current_task(),
+                        max_loop_time
                     )
                 )
                 continue
@@ -1171,6 +1175,7 @@ class Session:
         """send heartbeat request.
         Returns: false when request fail"""
         seq = self.next_seq()
+        self._last_heartbeat_time = time.time()
         packet = encode_heartbeat(
             seq,
             self._session_id,
@@ -1186,7 +1191,7 @@ class Session:
             if not isinstance(response, Heartbeat):
                 raise RuntimeError("Invalid heartbeat response type!")
         except (ConnectionError, asyncio.TimeoutError) as e:
-            log.network.warning(f"Heartbeat.Alive: failed by {e}")
+            log.network.warning(f"Heartbeat.Alive: failed by {str(e)}")
             return False
         return True
 
@@ -1209,7 +1214,9 @@ class Session:
         self._heartbeat_enabled = True
 
         while self._heartbeat_enabled and self.connected:
-            if not await self._do_heartbeat():
+            if self._last_heartbeat_time < time.time() - self._heartbeat_interval:
+                pass  # ignore, next cycle
+            elif not await self._do_heartbeat():
                 break
             await asyncio.sleep(self._heartbeat_interval)
 
