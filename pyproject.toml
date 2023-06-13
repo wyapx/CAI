@@ -1,6 +1,6 @@
 [project]
 name = "cai"
-version = "0.1.1"
+version = "0.1.2"
 description = "A QQ protocol framework"
 authors = [
     {name = "yanyongyu", email = "yanyongyu_1@126.com"},
