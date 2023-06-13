@@ -113,7 +113,9 @@ _✨ Yet Another Bot Framework for Tencent QQ Written in Python ✨_
 - [x] 发送群消息(`send_group_msg`)
 - [x] 发送戳一戳(`send_nudge`)
 - [x] 设置群管理(`set_group_admin`)
-- 
+- [x] 禁言群员(`mute_member`)
+- [x] 撤回消息(`recall_group_msg`)
+- [x] 漫游消息(`get_group_msg`)
 
 ### 事件
 
