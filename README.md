@@ -130,7 +130,21 @@ _✨ Yet Another Bot Framework for Tencent QQ Written in Python ✨_
 - [ ] 好友事件 ([friend.py](https://github.com/wyapx/CAI/blob/dev/cai/client/events/friend.py))
 </details>
 
-## 二次开发
+## 使用
+
+### 快速安装  
+
+从 pypi 安装（推荐）：  
+```shell
+pip install cai-bot
+```
+
+从 git 安装（最新版，可能存在问题）：  
+```shell
+pip install git+https://github.com/wyapx/CAI@dev
+```
+
+### 二次开发
 
 暂无文档，请参考 [examples](https://github.com/wyapx/CAI/tree/dev/examples) 中的源代码进行开发  
 `注意`：这需要你有 **一定** 的源代码阅读能力
