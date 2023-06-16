@@ -30,8 +30,12 @@ class HttpResponse:
             return self.body
 
     def json(self, verify_type=True) -> Union[dict, list]:
-        if self.header.get("Content-Type", "").find("application/json") == -1 and verify_type:
-            raise TypeError(self.header["Content-Type"])
+        if (
+            "Content-Type" in self.header and
+            self.header["Content-Type"].find("application/json") == -1 and
+            verify_type
+        ):
+            raise TypeError(self.header.get("Content-Type", "NotSet"))
         return json.loads(self.decompressed_body)
 
     def text(self, encoding="utf-8", errors="strict") -> str:
