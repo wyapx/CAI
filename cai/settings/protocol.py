@@ -36,9 +36,9 @@ class Protocols:
         PHONE = ApkInfo(
             apk_id="com.tencent.mobileqq",
             app_id=16,
-            sub_app_id=537153294,
-            version="8.9.33.10440",
-            build_time=1676531414,
+            sub_app_id=537163098,
+            version="8.9.58.11170",
+            build_time=1684467300,
             apk_sign=bytes(
                 [
                     0xA6,
@@ -59,10 +59,10 @@ class Protocols:
                     0x8D,
                 ]
             ),
-            sdk_version="6.0.0.2535",
-            sso_version=19,
+            sdk_version="6.0.0.2545",
+            sso_version=20,
             bitmap=150470524,
-            main_sigmap=16724722,
+            main_sigmap=34869472,
             sub_sigmap=0x10400,
             device_type="Android Phone"
         )
@@ -70,9 +70,9 @@ class Protocols:
         PAD = ApkInfo(
             apk_id="com.tencent.mobileqq",
             app_id=16,
-            sub_app_id=537152242,
-            version="8.9.33.10335",
-            build_time=1676531414,
+            sub_app_id=537161402,
+            version="8.9.58.11170",
+            build_time=1684467300,
             apk_sign=bytes(
                 [
                     0xA6,
@@ -93,12 +93,12 @@ class Protocols:
                     0x8D,
                 ]
             ),
-            sdk_version="6.0.0.2535",
-            sso_version=19,
+            sdk_version="6.0.0.2545",
+            sso_version=20,
             bitmap=150470524,
-            main_sigmap=16724722,
+            main_sigmap=34869472,
             sub_sigmap=0x10400,
-            device_type="Android Pad"
+            device_type="Android Phone"
         )
 
         WATCH = ApkInfo(
@@ -138,9 +138,9 @@ class Protocols:
     IPAD = ApkInfo(
         apk_id="com.tencent.minihd.qq",
         app_id=16,
-        sub_app_id=537118796,
-        version="5.9.3",
-        build_time=1595836208,
+        sub_app_id=537155074,
+        version="8.9.50.611",
+        build_time=1676531414,
         apk_sign=bytes(
             [
                 170,
@@ -161,8 +161,8 @@ class Protocols:
                 199,
             ]
         ),
-        sdk_version="6.0.0.2433",
-        sso_version=12,
+        sdk_version="6.0.0.2535",
+        sso_version=19,
         bitmap=150470524,
         main_sigmap=1970400,
         sub_sigmap=66560,
