@@ -597,13 +597,14 @@ class Session:
                 log.logger.warning(f"{self.uin} connection lost: {str(e)}")
                 break
             except asyncio.TimeoutError:
-                self.create_task(
-                    self._active_keepalive(
-                        asyncio.current_task(),
-                        max_loop_time
-                    )
-                )
                 continue
+                # self.create_task(
+                #     self._active_keepalive(
+                #         asyncio.current_task(),
+                #         max_loop_time
+                #     )
+                # )
+                # continue
 
             try:
                 packet = IncomingPacket.parse(
