@@ -33,7 +33,7 @@ async def _connect_async_stdin() -> Callable[[str], Coroutine[Any, Any, bytes]]:
     loop = asyncio.get_running_loop()
 
     async def _win32(prompt: str = "") -> bytes:
-        return (await asyncio.to_thread(input, prompt)).encode()
+        return (await loop.run_in_executor(None, input, prompt)).encode()
 
     async def _asyncio(prompt: str = "") -> bytes:
         reader = asyncio.StreamReader()
