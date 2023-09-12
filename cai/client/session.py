@@ -118,6 +118,7 @@ from .wtlogin import (
     encode_login_request2_slider,
     encode_login_request2_captcha,
     encode_login_request11,
+    encode_sms_login_request
 )
 
 HT = Callable[["Session", IncomingPacket], Awaitable[Command]]
@@ -576,7 +577,7 @@ class Session:
         Note:
             Source: com.tencent.mobileqq.msf.core.auth.n.a
         """
-        while self.connected:
+        while self.connected and self._heartbeat_enabled:
             try:
                 length: int = (
                     struct.unpack(
@@ -591,9 +592,7 @@ class Session:
                 break
             except asyncio.TimeoutError:
                 if self._last_heartbeat_time < time.time() - (self._heartbeat_interval * 1.5):
-                    continue
-                if not await self._do_heartbeat():
-                    log.logger.warning(f"{self.uin} connection lost: heartbeat not response")
+                    self._heartbeat_enabled = False
                     break
                 else:
                     continue
@@ -820,6 +819,41 @@ class Session:
             self._siginfo
         )
         response = await self.send_and_wait(seq, "wtlogin.exchange_emp", packet)
+        return await self._handle_login_response(response)
+
+    async def sms_login(
+        self, captcha_sign: str, phone: int, country_code=86
+    ) -> LoginSuccess:
+        """
+        Returns:
+            LoginSuccess: Success login command.
+
+        Raises:
+            RuntimeError: Error response type got. This should not happen.
+            ApiResponseError: Invalid response got. Like unknown return code.
+            LoginSliderNeeded: Slider ticket needed.
+            LoginCaptchaNeeded: Captcha image needed.
+            LoginAccountFrozen: Account is frozen.
+            LoginDeviceLocked: Device lock detected.
+            LoginSMSRequestError: Too many SMS messages were sent.
+            LoginException: Unknown login return code or other exception.
+        """
+        seq = self.next_seq()
+        packet = encode_sms_login_request(
+            seq,
+            self._key,
+            self._session_id,
+            self._ksid,
+            0,  # fixed
+            captcha_sign,
+            country_code,
+            phone,
+            self.device.imei,
+            self._t547,
+            self.apk_info,
+            self._device
+        )
+        response = await self.send_and_wait(seq, "wtlogin.login", packet)
         return await self._handle_login_response(response)
 
     async def submit_captcha(
