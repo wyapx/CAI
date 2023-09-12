@@ -596,9 +596,10 @@ class Session:
                 break
             except asyncio.TimeoutError:
                 if (
-                    self._last_heartbeat_time < time.time() - (self._heartbeat_interval * 1.5)
+                    self._last_heartbeat_time < time.time() - (self._heartbeat_interval * 1.6)
                     or not self._heartbeat_enabled
                 ):
+                    log.network.warning("heartbeat not working")
                     self._heartbeat_enabled = False
                     break
                 else:
@@ -618,6 +619,7 @@ class Session:
                 self.create_task(self._handle_incoming_packet(packet))
             except:
                 log.logger.exception("Unexpected error raised")
+        log.logger.debug(asyncio.all_tasks())
 
     @property
     def listeners(self) -> Set[LT]:
