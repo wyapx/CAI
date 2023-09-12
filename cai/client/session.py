@@ -576,7 +576,7 @@ class Session:
         Note:
             Source: com.tencent.mobileqq.msf.core.auth.n.a
         """
-        while self.connected and self._heartbeat_enabled:
+        while self.connected:
             try:
                 length: int = (
                     struct.unpack(
@@ -590,7 +590,10 @@ class Session:
                 log.logger.warning(f"{self.uin} connection lost: {str(e)}")
                 break
             except asyncio.TimeoutError:
-                if self._last_heartbeat_time < time.time() - (self._heartbeat_interval * 1.5):
+                if (
+                    self._last_heartbeat_time < time.time() - (self._heartbeat_interval * 1.5)
+                    or not self._heartbeat_enabled
+                ):
                     self._heartbeat_enabled = False
                     break
                 else:
