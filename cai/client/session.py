@@ -376,6 +376,11 @@ class Session:
         task.add_done_callback(self._recv_done_cb)
 
     def _recv_done_cb(self, task: asyncio.Task):
+        # resolve call twice problem
+        exc = task.exception()
+        if isinstance(exc, RuntimeError):
+            log.network.debug("may call twice, not recover")
+            return
         # connection lost
         self.dispatch_event(BotOfflineEvent(
             qq=self.uin,
