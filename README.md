@@ -1,3 +1,5 @@
+# 过期协议，不再继续更新
+
 <p align="center">
   <a href="#"><img src="https://raw.githubusercontent.com/cscs181/CAI/master/docs/assets/logo_text.png" width="40%" alt="CAI"></a>
 </p>
